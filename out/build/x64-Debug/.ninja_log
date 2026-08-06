@@ -1,0 +1,9 @@
+# ninja log v6
+34	1414	8076858423428036	CMakeFiles/MyanglishEngine.dir/engine/UnicodeUtils.cpp.obj	22510340e5e6a98
+7	2031	8076858423160813	CMakeFiles/MyanglishEngine.dir/engine/Dictionary.cpp.obj	f536c56ace33571d
+22	2403	8076858423316494	CMakeFiles/MyanglishEngine.dir/engine/MyanglishConverter.cpp.obj	ef9761d43da1a9c1
+2404	2560	8076858447122843	MyanglishEngine.lib	413e2daa230d080f
+45	2664	8076858423539690	CMakeFiles/MyanglishPrototype.dir/prototype/main.cpp.obj	2619ab4c6ccf258c
+2665	3443	8076858449735533	MyanglishPrototype.exe	f3eda19b51aeb800
+28	1857	8076859459020017	CMakeFiles/MyanglishTests.dir/tests/ConverterTests.cpp.obj	f1eb34d65b5ab3ad
+1863	2865	8076859477367512	MyanglishTests.exe	f0b1b6712a8c19e8

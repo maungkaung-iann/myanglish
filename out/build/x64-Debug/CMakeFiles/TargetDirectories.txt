@@ -1,0 +1,6 @@
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/MyanglishEngine.dir
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/MyanglishPrototype.dir
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/MyanglishTests.dir
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/test.dir
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir

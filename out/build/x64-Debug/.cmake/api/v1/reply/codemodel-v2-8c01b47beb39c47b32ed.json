@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "MyanglishIME",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "MyanglishEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MyanglishEngine-Debug-08240a8d1c799cdd50a9.json",
+					"name" : "MyanglishEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MyanglishPrototype::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MyanglishPrototype-Debug-425e6ecbda300d3dfaff.json",
+					"name" : "MyanglishPrototype",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MyanglishTests::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MyanglishTests-Debug-a5ed5ccac8c9089f5a6d.json",
+					"name" : "MyanglishTests",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/kaung/OneDrive/Desktop/myanglish/out/build/x64-Debug",
+		"source" : "C:/Users/kaung/OneDrive/Desktop/myanglish"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}
