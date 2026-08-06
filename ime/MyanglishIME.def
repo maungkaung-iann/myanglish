@@ -1,0 +1,6 @@
+LIBRARY MyanglishIME
+EXPORTS
+    DllCanUnloadNow
+    DllGetClassObject
+    DllRegisterServer
+    DllUnregisterServer

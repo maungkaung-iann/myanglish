@@ -3,6 +3,7 @@
 #include "Dictionary.h"
 
 #include <cstddef>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -16,7 +17,7 @@ struct Candidate {
 
 class MyanglishConverter {
 public:
-    explicit MyanglishConverter(Dictionary dictionary);
+    explicit MyanglishConverter(Dictionary dictionary, std::filesystem::path dataRoot = {});
 
     std::string convertSentence(const std::string& input) const;
     std::vector<Candidate> getCandidates(const std::string& myanglish, std::size_t limit = 5) const;
@@ -34,6 +35,7 @@ private:
     std::vector<Candidate> buildRuleCandidates(const std::string& text) const;
 
     Dictionary dictionary_;
+    std::filesystem::path dataRoot_;
     std::unordered_map<std::string, std::vector<RhymeRule>> rhymeRulesByCode_;
     std::vector<std::string> rhymeCodesByLength_;
     std::unordered_map<std::string, std::vector<RhymeRule>> toneMarkRulesByCode_;

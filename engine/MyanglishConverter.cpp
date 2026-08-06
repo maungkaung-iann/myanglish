@@ -30,18 +30,8 @@ struct CsvRow {
     std::string third;
 };
 
-std::filesystem::path rhymeRulesPath() {
-    return std::filesystem::path(MYANGLISHIME_SOURCE_DIR)
-        / "data"
-        / "rules"
-        / "rhymes.csv";
-}
-
-std::filesystem::path toneMarkRulesPath() {
-    return std::filesystem::path(MYANGLISHIME_SOURCE_DIR)
-        / "data"
-        / "rules"
-        / "tone_marks.csv";
+std::filesystem::path sourceDataRoot() {
+    return std::filesystem::path(MYANGLISHIME_SOURCE_DIR);
 }
 
 bool parseCsvLine(const std::string& line, CsvRow& row) {
@@ -173,8 +163,9 @@ bool consumeMedials(const std::string& text, std::size_t& index, std::string& ou
 
 } // namespace
 
-MyanglishConverter::MyanglishConverter(Dictionary dictionary)
-    : dictionary_(std::move(dictionary)) {
+MyanglishConverter::MyanglishConverter(Dictionary dictionary, std::filesystem::path dataRoot)
+        : dictionary_(std::move(dictionary)),
+      dataRoot_(dataRoot.empty() ? sourceDataRoot() : std::move(dataRoot)) {
     auto loadRulesFromCsv = [&](const std::filesystem::path& path, auto& rulesByCode, auto& codesByLength, std::size_t& priority) {
         std::ifstream file(path, std::ios::binary);
         if (!file.is_open()) {
@@ -222,8 +213,8 @@ MyanglishConverter::MyanglishConverter(Dictionary dictionary)
     };
 
     std::size_t priority = 0;
-    loadRulesFromCsv(rhymeRulesPath(), rhymeRulesByCode_, rhymeCodesByLength_, priority);
-    loadRulesFromCsv(toneMarkRulesPath(), toneMarkRulesByCode_, toneMarkCodesByLength_, priority);
+    loadRulesFromCsv(dataRoot_ / "data" / "rules" / "rhymes.csv", rhymeRulesByCode_, rhymeCodesByLength_, priority);
+    loadRulesFromCsv(dataRoot_ / "data" / "rules" / "tone_marks.csv", toneMarkRulesByCode_, toneMarkCodesByLength_, priority);
 
     std::sort(rhymeCodesByLength_.begin(), rhymeCodesByLength_.end(), [](const std::string& left, const std::string& right) {
         if (left.size() != right.size()) {
