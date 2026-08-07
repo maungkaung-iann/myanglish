@@ -64,6 +64,27 @@ std::string stripUtf8Bom(std::string text) {
     return text;
 }
 
+std::string stripOptionalQuotes(std::string text) {
+    text = trim(text);
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
+        text = text.substr(1, text.size() - 2);
+    }
+    return text;
+}
+
+std::vector<std::string> splitPipeSeparated(const std::string& text) {
+    std::vector<std::string> parts;
+    std::stringstream stream(stripOptionalQuotes(text));
+    std::string part;
+    while (std::getline(stream, part, '|')) {
+        part = toLowerAscii(trim(part));
+        if (!part.empty()) {
+            parts.push_back(part);
+        }
+    }
+    return parts;
+}
+
 bool isHeaderRow(const CsvRow& row) {
     return toLowerAscii(trim(row.first)) == "code"
         && toLowerAscii(trim(row.second)) == "standalone_output"
@@ -216,6 +237,60 @@ MyanglishConverter::MyanglishConverter(Dictionary dictionary, std::filesystem::p
     loadRulesFromCsv(dataRoot_ / "data" / "rules" / "rhymes.csv", rhymeRulesByCode_, rhymeCodesByLength_, priority);
     loadRulesFromCsv(dataRoot_ / "data" / "rules" / "tone_marks.csv", toneMarkRulesByCode_, toneMarkCodesByLength_, priority);
 
+    auto addMasterRule = [&](const std::string& code, const std::string& burmese, int score) {
+        if (code.empty() || burmese.empty()) {
+            return;
+        }
+
+        auto& rules = masterRhymeRulesByCode_[toLowerAscii(code)];
+        for (auto& existing : rules) {
+            if (existing.burmese == burmese) {
+                existing.score = std::max(existing.score, score);
+                return;
+            }
+        }
+        rules.push_back(MasterRhymeRule{burmese, score});
+    };
+
+    const auto masterPath = dataRoot_ / "data" / "myanglish_rules" / "rhymes_master_v1.csv";
+    std::ifstream masterFile(masterPath, std::ios::binary);
+    if (masterFile.is_open()) {
+        std::string line;
+        std::size_t lineNumber = 0;
+        while (std::getline(masterFile, line)) {
+            ++lineNumber;
+            std::string trimmedLine = trim(line);
+            if (lineNumber == 1) {
+                trimmedLine = stripUtf8Bom(std::move(trimmedLine));
+            }
+            if (trimmedLine.empty()) {
+                continue;
+            }
+
+            CsvRow row;
+            if (!parseCsvLine(trimmedLine, row)) {
+                continue;
+            }
+
+            if (lineNumber == 1
+                && toLowerAscii(trim(row.first)) == "burmese"
+                && toLowerAscii(trim(row.second)) == "main") {
+                continue;
+            }
+
+            const std::string burmese = stripOptionalQuotes(row.first);
+            const std::string mainCode = toLowerAscii(stripOptionalQuotes(row.second));
+            if (burmese.empty() || mainCode.empty()) {
+                continue;
+            }
+
+            addMasterRule(mainCode, burmese, 300000);
+            for (const auto& variant : splitPipeSeparated(row.third)) {
+                addMasterRule(variant, burmese, 200000);
+            }
+        }
+    }
+
     std::sort(rhymeCodesByLength_.begin(), rhymeCodesByLength_.end(), [](const std::string& left, const std::string& right) {
         if (left.size() != right.size()) {
             return left.size() > right.size();
@@ -319,6 +394,35 @@ std::vector<Candidate> MyanglishConverter::buildRuleCandidates(const std::string
         });
     };
 
+    auto appendMasterRules = [&](const std::string& code, const std::string& prefixOutput, const std::string& baseLatin) {
+        const auto it = masterRhymeRulesByCode_.find(toLowerAscii(code));
+        if (it == masterRhymeRulesByCode_.end()) {
+            return;
+        }
+        for (const auto& rule : it->second) {
+            std::string burmeseRhyme = rule.burmese;
+            if (burmeseRhyme == "ာ" && (baseLatin == "kh" || baseLatin == "ng")) {
+                burmeseRhyme = "ါ";
+            }
+            candidates.push_back(Candidate{prefixOutput + burmeseRhyme, rule.score});
+        }
+    };
+
+    // Try the new master table before the legacy rules.
+    std::size_t masterBaseLength = 0;
+    const BaseConsonantRule* masterBaseRule = findBaseConsonant(normalized, masterBaseLength);
+    if (masterBaseRule != nullptr && masterBaseLength > 0) {
+        // Direct suffix: kwat -> က + ွက်
+        appendMasterRules(normalized.substr(masterBaseLength), masterBaseRule->burmese, masterBaseRule->latin);
+
+        // Medial split: kyaung -> က + ျ + ောင်း
+        std::size_t medialIndex = masterBaseLength;
+        std::string medialPrefix = masterBaseRule->burmese;
+        if (consumeMedials(normalized, medialIndex, medialPrefix) && medialIndex < normalized.size()) {
+            appendMasterRules(normalized.substr(medialIndex), medialPrefix, masterBaseRule->latin);
+        }
+    }
+
     auto tryParse = [&](std::size_t consumedLength, const std::string& prefixOutput, const std::string& baseLatin, bool standalone) {
         std::size_t index = consumedLength;
         std::string syllable = prefixOutput;
@@ -364,6 +468,11 @@ std::vector<Candidate> MyanglishConverter::buildRuleCandidates(const std::string
     std::size_t baseLength = 0;
     const BaseConsonantRule* baseRule = findBaseConsonant(normalized, baseLength);
     if (baseRule != nullptr && baseLength > 0 && tryParse(baseLength, baseRule->burmese, baseRule->latin, false)) {
+        appendAndFinalize(candidates);
+        return candidates;
+    }
+
+    if (!candidates.empty()) {
         appendAndFinalize(candidates);
         return candidates;
     }

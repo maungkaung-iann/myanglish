@@ -31,6 +31,11 @@ private:
         int frequency = 0;
     };
 
+    struct MasterRhymeRule {
+        std::string burmese;
+        int score = 0;
+    };
+
     static Candidate makeBestCandidate(const std::vector<DictionaryEntry>& entries);
     std::vector<Candidate> buildRuleCandidates(const std::string& text) const;
 
@@ -40,6 +45,7 @@ private:
     std::vector<std::string> rhymeCodesByLength_;
     std::unordered_map<std::string, std::vector<RhymeRule>> toneMarkRulesByCode_;
     std::vector<std::string> toneMarkCodesByLength_;
+    std::unordered_map<std::string, std::vector<MasterRhymeRule>> masterRhymeRulesByCode_;
 };
 
 } // namespace myanglish

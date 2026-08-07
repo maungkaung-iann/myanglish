@@ -1,0 +1,210 @@
+--- a/engine/MyanglishConverter.h
++++ b/engine/MyanglishConverter.h
+@@ -31,6 +31,11 @@
+         int frequency = 0;
+     };
+ 
++    struct MasterRhymeRule {
++        std::string burmese;
++        int score = 0;
++    };
++
+     static Candidate makeBestCandidate(const std::vector<DictionaryEntry>& entries);
+     std::vector<Candidate> buildRuleCandidates(const std::string& text) const;
+ 
+@@ -40,6 +45,7 @@
+     std::vector<std::string> rhymeCodesByLength_;
+     std::unordered_map<std::string, std::vector<RhymeRule>> toneMarkRulesByCode_;
+     std::vector<std::string> toneMarkCodesByLength_;
++    std::unordered_map<std::string, std::vector<MasterRhymeRule>> masterRhymeRulesByCode_;
+ };
+ 
+ } // namespace myanglish
+--- a/engine/MyanglishConverter.cpp
++++ b/engine/MyanglishConverter.cpp
+@@ -64,6 +64,27 @@
+     return text;
+ }
+ 
++std::string stripOptionalQuotes(std::string text) {
++    text = trim(text);
++    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
++        text = text.substr(1, text.size() - 2);
++    }
++    return text;
++}
++
++std::vector<std::string> splitPipeSeparated(const std::string& text) {
++    std::vector<std::string> parts;
++    std::stringstream stream(stripOptionalQuotes(text));
++    std::string part;
++    while (std::getline(stream, part, '|')) {
++        part = toLowerAscii(trim(part));
++        if (!part.empty()) {
++            parts.push_back(part);
++        }
++    }
++    return parts;
++}
++
+ bool isHeaderRow(const CsvRow& row) {
+     return toLowerAscii(trim(row.first)) == "code"
+         && toLowerAscii(trim(row.second)) == "standalone_output"
+@@ -216,6 +237,60 @@
+     loadRulesFromCsv(dataRoot_ / "data" / "rules" / "rhymes.csv", rhymeRulesByCode_, rhymeCodesByLength_, priority);
+     loadRulesFromCsv(dataRoot_ / "data" / "rules" / "tone_marks.csv", toneMarkRulesByCode_, toneMarkCodesByLength_, priority);
+ 
++    auto addMasterRule = [&](const std::string& code, const std::string& burmese, int score) {
++        if (code.empty() || burmese.empty()) {
++            return;
++        }
++
++        auto& rules = masterRhymeRulesByCode_[toLowerAscii(code)];
++        for (auto& existing : rules) {
++            if (existing.burmese == burmese) {
++                existing.score = std::max(existing.score, score);
++                return;
++            }
++        }
++        rules.push_back(MasterRhymeRule{burmese, score});
++    };
++
++    const auto masterPath = dataRoot_ / "data" / "myanglish_rules" / "rhymes_master_v1.csv";
++    std::ifstream masterFile(masterPath, std::ios::binary);
++    if (masterFile.is_open()) {
++        std::string line;
++        std::size_t lineNumber = 0;
++        while (std::getline(masterFile, line)) {
++            ++lineNumber;
++            std::string trimmedLine = trim(line);
++            if (lineNumber == 1) {
++                trimmedLine = stripUtf8Bom(std::move(trimmedLine));
++            }
++            if (trimmedLine.empty()) {
++                continue;
++            }
++
++            CsvRow row;
++            if (!parseCsvLine(trimmedLine, row)) {
++                continue;
++            }
++
++            if (lineNumber == 1
++                && toLowerAscii(trim(row.first)) == "burmese"
++                && toLowerAscii(trim(row.second)) == "main") {
++                continue;
++            }
++
++            const std::string burmese = stripOptionalQuotes(row.first);
++            const std::string mainCode = toLowerAscii(stripOptionalQuotes(row.second));
++            if (burmese.empty() || mainCode.empty()) {
++                continue;
++            }
++
++            addMasterRule(mainCode, burmese, 300000);
++            for (const auto& variant : splitPipeSeparated(row.third)) {
++                addMasterRule(variant, burmese, 200000);
++            }
++        }
++    }
++
+     std::sort(rhymeCodesByLength_.begin(), rhymeCodesByLength_.end(), [](const std::string& left, const std::string& right) {
+         if (left.size() != right.size()) {
+             return left.size() > right.size();
+@@ -319,6 +394,35 @@
+         });
+     };
+ 
++    auto appendMasterRules = [&](const std::string& code, const std::string& prefixOutput, const std::string& baseLatin) {
++        const auto it = masterRhymeRulesByCode_.find(toLowerAscii(code));
++        if (it == masterRhymeRulesByCode_.end()) {
++            return;
++        }
++        for (const auto& rule : it->second) {
++            std::string burmeseRhyme = rule.burmese;
++            if (burmeseRhyme == "ာ" && (baseLatin == "kh" || baseLatin == "ng")) {
++                burmeseRhyme = "ါ";
++            }
++            candidates.push_back(Candidate{prefixOutput + burmeseRhyme, rule.score});
++        }
++    };
++
++    // Try the new master table before the legacy rules.
++    std::size_t masterBaseLength = 0;
++    const BaseConsonantRule* masterBaseRule = findBaseConsonant(normalized, masterBaseLength);
++    if (masterBaseRule != nullptr && masterBaseLength > 0) {
++        // Direct suffix: kwat -> က + ွက်
++        appendMasterRules(normalized.substr(masterBaseLength), masterBaseRule->burmese, masterBaseRule->latin);
++
++        // Medial split: kyaung -> က + ျ + ောင်း
++        std::size_t medialIndex = masterBaseLength;
++        std::string medialPrefix = masterBaseRule->burmese;
++        if (consumeMedials(normalized, medialIndex, medialPrefix) && medialIndex < normalized.size()) {
++            appendMasterRules(normalized.substr(medialIndex), medialPrefix, masterBaseRule->latin);
++        }
++    }
++
+     auto tryParse = [&](std::size_t consumedLength, const std::string& prefixOutput, const std::string& baseLatin, bool standalone) {
+         std::size_t index = consumedLength;
+         std::string syllable = prefixOutput;
+@@ -367,6 +471,11 @@
+         appendAndFinalize(candidates);
+         return candidates;
+     }
++
++    if (!candidates.empty()) {
++        appendAndFinalize(candidates);
++        return candidates;
++    }
+ 
+     return {};
+ }
+--- a/tests/ConverterTests.cpp
++++ b/tests/ConverterTests.cpp
+@@ -2,6 +2,7 @@
+ #include "Dictionary.h"
+ #include "UnicodeUtils.h"
+ 
++#include <algorithm>
+ #include <filesystem>
+ #include <iostream>
+ #include <stdexcept>
+@@ -36,6 +37,13 @@
+     void expectEqualSize(std::size_t actual, std::size_t expected, const std::string& name) {
+         expectTrue(actual == expected, name + "\n  expected: " + std::to_string(expected) + "\n  actual:   " + std::to_string(actual));
+     }
++
++    void expectContains(const std::vector<myanglish::Candidate>& candidates, const std::string& expected, const std::string& name) {
++        const bool found = std::any_of(candidates.begin(), candidates.end(), [&](const myanglish::Candidate& candidate) {
++            return candidate.burmese == expected;
++        });
++        expectTrue(found, name + "\n  expected candidate: " + expected);
++    }
+ };
+ 
+ myanglish::MyanglishConverter loadConverterOrThrow() {
+@@ -97,12 +105,18 @@
+         tests.expectEqual(converter.convertSentence("kan"), u8"ကန်", "Candidate default kan");
+ 
+         const auto kanCandidates = converter.getCandidates("kan");
+-        tests.expectEqualSize(kanCandidates.size(), 3, "Candidate support kan");
+-        if (kanCandidates.size() == 3) {
+-            tests.expectEqual(kanCandidates[0].burmese, u8"ကန်", "Candidate support kan first");
+-            tests.expectEqual(kanCandidates[1].burmese, u8"ကံ", "Candidate support kan second");
+-            tests.expectEqual(kanCandidates[2].burmese, u8"ကန်း", "Candidate support kan third");
+-        }
++        tests.expectEqualSize(kanCandidates.size(), 5, "Candidate support kan");
++        tests.expectContains(kanCandidates, u8"ကန်", "Candidate support kan contains ကန်");
++        tests.expectContains(kanCandidates, u8"ကန်း", "Candidate support kan contains ကန်း");
++        tests.expectContains(kanCandidates, u8"ကမ်", "Candidate support kan contains ကမ်");
++        tests.expectContains(kanCandidates, u8"ကမ်း", "Candidate support kan contains ကမ်း");
++        tests.expectContains(kanCandidates, u8"ကံ", "Candidate support kan contains ကံ");
++
++        tests.expectEqual(converter.convertSentence("ker"), u8"ကား", "Master main er -> ား");
++        tests.expectEqual(converter.convertSentence("kee"), u8"ကီး", "Master main ee -> ီး");
++        tests.expectEqual(converter.convertSentence("kinn"), u8"ကင်း", "Master main inn -> င်း");
++        tests.expectEqual(converter.convertSentence("kis"), u8"ကစ်", "Master variant is -> စ်");
++        tests.expectEqual(converter.convertSentence("kwat"), u8"ကွက်", "Master direct wat -> ွက်");
+ 
+         const auto unknownCandidates = converter.getCandidates("unknownword");
+         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");

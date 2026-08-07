@@ -2,6 +2,7 @@
 #include "Dictionary.h"
 #include "UnicodeUtils.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -35,6 +36,13 @@ struct TestSuite {
 
     void expectEqualSize(std::size_t actual, std::size_t expected, const std::string& name) {
         expectTrue(actual == expected, name + "\n  expected: " + std::to_string(expected) + "\n  actual:   " + std::to_string(actual));
+    }
+
+    void expectContains(const std::vector<myanglish::Candidate>& candidates, const std::string& expected, const std::string& name) {
+        const bool found = std::any_of(candidates.begin(), candidates.end(), [&](const myanglish::Candidate& candidate) {
+            return candidate.burmese == expected;
+        });
+        expectTrue(found, name + "\n  expected candidate: " + expected);
     }
 };
 
@@ -97,12 +105,18 @@ int main() {
         tests.expectEqual(converter.convertSentence("kan"), u8"ကန်", "Candidate default kan");
 
         const auto kanCandidates = converter.getCandidates("kan");
-        tests.expectEqualSize(kanCandidates.size(), 3, "Candidate support kan");
-        if (kanCandidates.size() == 3) {
-            tests.expectEqual(kanCandidates[0].burmese, u8"ကန်", "Candidate support kan first");
-            tests.expectEqual(kanCandidates[1].burmese, u8"ကံ", "Candidate support kan second");
-            tests.expectEqual(kanCandidates[2].burmese, u8"ကန်း", "Candidate support kan third");
-        }
+        tests.expectEqualSize(kanCandidates.size(), 5, "Candidate support kan");
+        tests.expectContains(kanCandidates, u8"ကန်", "Candidate support kan contains ကန်");
+        tests.expectContains(kanCandidates, u8"ကန်း", "Candidate support kan contains ကန်း");
+        tests.expectContains(kanCandidates, u8"ကမ်", "Candidate support kan contains ကမ်");
+        tests.expectContains(kanCandidates, u8"ကမ်း", "Candidate support kan contains ကမ်း");
+        tests.expectContains(kanCandidates, u8"ကံ", "Candidate support kan contains ကံ");
+
+        tests.expectEqual(converter.convertSentence("ker"), u8"ကား", "Master main er -> ား");
+        tests.expectEqual(converter.convertSentence("kee"), u8"ကီး", "Master main ee -> ီး");
+        tests.expectEqual(converter.convertSentence("kinn"), u8"ကင်း", "Master main inn -> င်း");
+        tests.expectEqual(converter.convertSentence("kis"), u8"ကစ်", "Master variant is -> စ်");
+        tests.expectEqual(converter.convertSentence("kwat"), u8"ကွက်", "Master direct wat -> ွက်");
 
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
