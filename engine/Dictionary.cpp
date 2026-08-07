@@ -2,7 +2,6 @@
 #include "UnicodeUtils.h"
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -180,37 +179,6 @@ bool Dictionary::loadFromCsv(
 
         return false;
     }
-
-    // Temporary debug information.
-    std::cout
-        << "[Dictionary Debug] Path: "
-        << path.string()
-        << '\n';
-
-    std::cout
-        << "[Dictionary Debug] Loaded entries: "
-        << entries_.size()
-        << '\n';
-
-    const auto bEntries = findEntries("b");
-
-    std::cout
-        << "[Dictionary Debug] Entries for b: "
-        << bEntries.size()
-        << '\n';
-
-    for (const auto& entry : bEntries) {
-        std::cout
-            << "[Dictionary Debug] "
-            << entry.myanglish
-            << " -> "
-            << entry.burmese
-            << " (frequency "
-            << entry.frequency
-            << ")\n";
-    }
-
-    std::cout << '\n';
 
     return true;
 }

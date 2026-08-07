@@ -1,5 +1,6 @@
 #include "KeyEventSink.h"
 
+#include "Globals.h"
 #include "TextService.h"
 
 namespace myanglish::ime {
@@ -67,7 +68,9 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
         return E_POINTER;
     }
 
+    const bool intendedToHandle = service_.shouldHandleKeyDown(pic, wParam);
     const HRESULT hr = service_.processKeyDown(pic, wParam);
+
     if (hr == S_OK) {
         *pfEaten = TRUE;
         return S_OK;
@@ -78,8 +81,13 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
         return S_OK;
     }
 
-    *pfEaten = FALSE;
-    return hr;
+    debugLogHr("OnKeyDown processing failure", hr);
+
+    // If OnTestKeyDown already said this TIP owns the key, consume it even on
+    // an internal failure. This prevents the underlying Burmese Visual layout
+    // from inserting an unrelated Myanmar character while we debug the error.
+    *pfEaten = intendedToHandle ? TRUE : FALSE;
+    return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {

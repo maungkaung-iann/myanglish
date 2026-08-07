@@ -1,6 +1,9 @@
 #include "Globals.h"
 
 #include <array>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <system_error>
 
 namespace myanglish::ime {
@@ -183,12 +186,54 @@ std::filesystem::path resolveDictionaryPath() {
     return resolveDataRoot() / "data" / "dictionary.csv";
 }
 
+std::filesystem::path debugLogPath() {
+    const std::filesystem::path localAppData = environmentPath(L"LOCALAPPDATA");
+    if (!localAppData.empty()) {
+        return localAppData / "MyanglishIME" / "debug.log";
+    }
+
+    return moduleDirectory() / "MyanglishIME-debug.log";
+}
+
 void debugLog(std::string_view message) noexcept {
 #ifdef MYANGLISHIME_ENABLE_DEBUG_LOG
-    const std::string line = std::string("[MyanglishIME] ") + std::string(message) + "\n";
-    OutputDebugStringA(line.c_str());
+    try {
+        const DWORD processId = GetCurrentProcessId();
+        const std::string line =
+            "[MyanglishIME pid=" + std::to_string(processId) + "] " +
+            std::string(message) + "\n";
+
+        OutputDebugStringA(line.c_str());
+
+        const std::filesystem::path logPath = debugLogPath();
+        std::error_code errorCode;
+        std::filesystem::create_directories(logPath.parent_path(), errorCode);
+
+        std::ofstream file(logPath, std::ios::binary | std::ios::app);
+        if (file.is_open()) {
+            file.write(line.data(), static_cast<std::streamsize>(line.size()));
+        }
+    } catch (...) {
+        // Debug logging must never destabilize an application hosting the TIP.
+    }
 #else
     (void)message;
+#endif
+}
+
+void debugLogHr(std::string_view operation, HRESULT hr) noexcept {
+#ifdef MYANGLISHIME_ENABLE_DEBUG_LOG
+    try {
+        std::ostringstream stream;
+        stream << operation << " hr=0x"
+               << std::hex << std::uppercase
+               << static_cast<unsigned long>(hr);
+        debugLog(stream.str());
+    } catch (...) {
+    }
+#else
+    (void)operation;
+    (void)hr;
 #endif
 }
 

@@ -293,16 +293,30 @@ std::vector<Candidate> MyanglishConverter::buildRuleCandidates(const std::string
     };
 
     auto appendAndFinalize = [&](std::vector<Candidate>& outputCandidates) {
+        // Keep only the highest-frequency entry for each Burmese output.
+        // std::unique after a frequency-first sort is not sufficient because
+        // duplicate Burmese strings with different frequencies may not be
+        // adjacent.
+        std::unordered_map<std::string, int> bestFrequencyByOutput;
+        for (const auto& candidate : outputCandidates) {
+            auto it = bestFrequencyByOutput.find(candidate.burmese);
+            if (it == bestFrequencyByOutput.end() || candidate.frequency > it->second) {
+                bestFrequencyByOutput[candidate.burmese] = candidate.frequency;
+            }
+        }
+
+        outputCandidates.clear();
+        outputCandidates.reserve(bestFrequencyByOutput.size());
+        for (const auto& pair : bestFrequencyByOutput) {
+            outputCandidates.push_back(Candidate{pair.first, pair.second});
+        }
+
         std::sort(outputCandidates.begin(), outputCandidates.end(), [](const Candidate& left, const Candidate& right) {
             if (left.frequency != right.frequency) {
                 return left.frequency > right.frequency;
             }
             return left.burmese < right.burmese;
         });
-
-        outputCandidates.erase(std::unique(outputCandidates.begin(), outputCandidates.end(), [](const Candidate& left, const Candidate& right) {
-            return left.burmese == right.burmese;
-        }), outputCandidates.end());
     };
 
     auto tryParse = [&](std::size_t consumedLength, const std::string& prefixOutput, const std::string& baseLatin, bool standalone) {

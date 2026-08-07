@@ -3,6 +3,8 @@
 #include "Guids.h"
 #include "KeyEventSink.h"
 
+#include <new>
+
 namespace myanglish::ime {
 
 namespace {
@@ -16,6 +18,9 @@ bool isSpaceToggle(WPARAM keyCode) {
 TextService::TextService()
     : compositionManager_(resolveDataRoot()) {
     addObject();
+    debugLog(compositionManager_.isReady()
+        ? "TextService created; converter ready"
+        : "TextService created; converter NOT ready");
 }
 
 TextService::~TextService() {
@@ -87,44 +92,71 @@ HRESULT TextService::activateInternal(ITfThreadMgr* threadMgr, TfClientId client
         return E_POINTER;
     }
 
+    debugLog("TextService activation started");
+
     threadMgr_ = threadMgr;
     threadMgr_->AddRef();
     clientId_ = clientId;
     compositionManager_.setClientId(clientId_);
 
-    HRESULT hr = threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, reinterpret_cast<void**>(&keystrokeMgr_));
+    HRESULT hr = threadMgr_->QueryInterface(
+        IID_ITfKeystrokeMgr,
+        reinterpret_cast<void**>(&keystrokeMgr_)
+    );
+
     if (FAILED(hr)) {
+        debugLogHr("QueryInterface(ITfKeystrokeMgr)", hr);
+        compositionManager_.setClientId(TF_CLIENTID_NULL);
+        clientId_ = TF_CLIENTID_NULL;
+        threadMgr_->Release();
+        threadMgr_ = nullptr;
         return hr;
     }
 
-    keyEventSink_ = new KeyEventSink(*this);
+    keyEventSink_ = new (std::nothrow) KeyEventSink(*this);
+    if (keyEventSink_ == nullptr) {
+        keystrokeMgr_->Release();
+        keystrokeMgr_ = nullptr;
+        compositionManager_.setClientId(TF_CLIENTID_NULL);
+        clientId_ = TF_CLIENTID_NULL;
+        threadMgr_->Release();
+        threadMgr_ = nullptr;
+        return E_OUTOFMEMORY;
+    }
+
     hr = keystrokeMgr_->AdviseKeyEventSink(clientId_, keyEventSink_, TRUE);
     if (FAILED(hr)) {
+        debugLogHr("AdviseKeyEventSink", hr);
         keyEventSink_->Release();
         keyEventSink_ = nullptr;
         keystrokeMgr_->Release();
         keystrokeMgr_ = nullptr;
+        compositionManager_.setClientId(TF_CLIENTID_NULL);
+        clientId_ = TF_CLIENTID_NULL;
         threadMgr_->Release();
         threadMgr_ = nullptr;
-        clientId_ = TF_CLIENTID_NULL;
         return hr;
     }
 
     enabled_ = true;
     active_ = true;
-    debugLog(std::string("Activated, flags=") + std::to_string(flags));
+    debugLog(std::string("TextService activated; flags=") + std::to_string(flags));
     return S_OK;
 }
 
 HRESULT TextService::deactivateInternal() {
-    debugLog("Deactivating");
+    debugLog("TextService deactivating");
 
     if (threadMgr_ != nullptr) {
         ITfDocumentMgr* focusDoc = nullptr;
         if (SUCCEEDED(threadMgr_->GetFocus(&focusDoc)) && focusDoc != nullptr) {
             ITfContext* context = nullptr;
             if (SUCCEEDED(focusDoc->GetTop(&context)) && context != nullptr) {
-                compositionManager_.cancel(context);
+                const HRESULT cancelResult = compositionManager_.cancel(context);
+                if (FAILED(cancelResult)) {
+                    debugLogHr("Cancel composition during deactivation", cancelResult);
+                    compositionManager_.clearWithoutContext();
+                }
                 context->Release();
             } else {
                 compositionManager_.clearWithoutContext();
@@ -139,7 +171,10 @@ HRESULT TextService::deactivateInternal() {
     }
 
     if (keystrokeMgr_ != nullptr && clientId_ != TF_CLIENTID_NULL) {
-        keystrokeMgr_->UnadviseKeyEventSink(clientId_);
+        const HRESULT unadviseResult = keystrokeMgr_->UnadviseKeyEventSink(clientId_);
+        if (FAILED(unadviseResult)) {
+            debugLogHr("UnadviseKeyEventSink", unadviseResult);
+        }
     }
 
     if (keyEventSink_ != nullptr) {
@@ -159,6 +194,7 @@ HRESULT TextService::deactivateInternal() {
 
     clientId_ = TF_CLIENTID_NULL;
     compositionManager_.setClientId(TF_CLIENTID_NULL);
+    active_ = false;
     return S_OK;
 }
 
@@ -167,16 +203,15 @@ bool TextService::isShiftPressed() const noexcept {
 }
 
 bool TextService::isAsciiLetter(WPARAM keyCode) noexcept {
-    return (keyCode >= 'A' && keyCode <= 'Z') || (keyCode >= 'a' && keyCode <= 'z');
+    // Letter virtual-key codes are VK_A..VK_Z regardless of Shift state.
+    return keyCode >= 'A' && keyCode <= 'Z';
 }
 
 wchar_t TextService::toLowerAsciiKey(WPARAM keyCode) noexcept {
     const wchar_t wide = static_cast<wchar_t>(keyCode);
-    if (wide >= L'A' && wide <= L'Z') {
-        return static_cast<wchar_t>(wide - L'A' + L'a');
-    }
-
-    return wide;
+    return (wide >= L'A' && wide <= L'Z')
+        ? static_cast<wchar_t>(wide - L'A' + L'a')
+        : wide;
 }
 
 bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcept {
@@ -184,11 +219,7 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         return isSpaceToggle(keyCode);
     }
 
-    if (isSpaceToggle(keyCode)) {
-        return true;
-    }
-
-    if (isAsciiLetter(keyCode)) {
+    if (isSpaceToggle(keyCode) || isAsciiLetter(keyCode)) {
         return true;
     }
 
@@ -200,13 +231,16 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
 }
 
 HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
+    if (context == nullptr) {
+        return E_POINTER;
+    }
+
     if (!enabled_) {
         if (isSpaceToggle(keyCode)) {
             enabled_ = true;
             debugLog("Switched to Myanglish mode");
             return S_OK;
         }
-
         return S_FALSE;
     }
 
@@ -214,6 +248,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
             const HRESULT commitHr = compositionManager_.commitOriginal(context);
             if (FAILED(commitHr)) {
+                debugLogHr("Commit original before mode switch", commitHr);
                 return commitHr;
             }
         }
@@ -226,7 +261,9 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (isAsciiLetter(keyCode)) {
         const HRESULT hr = compositionManager_.insertCharacter(context, toLowerAsciiKey(keyCode));
         if (SUCCEEDED(hr)) {
-            debugLog("Character handled");
+            debugLog("Letter handled by composition");
+        } else {
+            debugLogHr("insertCharacter", hr);
         }
         return hr;
     }
@@ -236,7 +273,11 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     if (keyCode == VK_SPACE) {
-        return compositionManager_.commitBestCandidate(context);
+        const HRESULT hr = compositionManager_.commitBestCandidate(context);
+        if (FAILED(hr)) {
+            debugLogHr("commitBestCandidate", hr);
+        }
+        return hr;
     }
 
     if (keyCode == VK_RETURN) {
@@ -251,10 +292,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
 }
 
 HRESULT TextService::onSetFocus(BOOL foreground) {
-    if (!foreground) {
-        debugLog("Focus lost");
-    }
-
+    debugLog(foreground ? "KeyEventSink focus gained" : "KeyEventSink focus lost");
     return S_OK;
 }
 

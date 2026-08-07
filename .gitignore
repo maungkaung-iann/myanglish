@@ -1,0 +1,8 @@
+
+# Generated build files
+build/
+build-*/
+out/
+.vs/
+*.pdb
+*.ilk
