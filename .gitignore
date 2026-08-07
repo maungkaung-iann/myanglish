@@ -8,3 +8,6 @@ out/
 *.ilk
 
 backup-alpha02-*/
+
+build*/
+backup-alpha02-*/
