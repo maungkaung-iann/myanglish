@@ -1,11 +1,9 @@
 #pragma once
 
-#include "CandidateWindow.h"
 #include "CompositionManager.h"
 #include "Globals.h"
 
 #include <atomic>
-#include <cstddef>
 
 #include <Windows.h>
 #include <msctf.h>
@@ -38,14 +36,8 @@ private:
     HRESULT activateInternal(ITfThreadMgr* threadMgr, TfClientId clientId, DWORD flags);
     HRESULT deactivateInternal();
 
-    bool openCandidateWindow(ITfContext* context);
-    HRESULT moveCandidateSelection(ITfContext* context, int delta);
-    HRESULT commitSelectedCandidate(ITfContext* context);
-    HRESULT selectCandidateByNumber(ITfContext* context, std::size_t index);
-
-    static bool isShortcutModifierPressed() noexcept;
+    bool isShiftPressed() const noexcept;
     static bool isAsciiLetter(WPARAM keyCode) noexcept;
-    static bool isCandidateNumberKey(WPARAM keyCode) noexcept;
     static wchar_t toLowerAsciiKey(WPARAM keyCode) noexcept;
 
     std::atomic<ULONG> refCount_{1};
@@ -55,7 +47,6 @@ private:
     bool active_ = false;
     bool enabled_ = true;
     CompositionManager compositionManager_;
-    CandidateWindow candidateWindow_;
     KeyEventSink* keyEventSink_ = nullptr;
 };
 

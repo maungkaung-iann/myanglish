@@ -3,7 +3,6 @@
 #include "Guids.h"
 #include "KeyEventSink.h"
 
-#include <algorithm>
 #include <new>
 
 namespace myanglish::ime {
@@ -25,8 +24,6 @@ TextService::TextService()
 }
 
 TextService::~TextService() {
-    candidateWindow_.hide();
-
     if (keyEventSink_ != nullptr) {
         keyEventSink_->Release();
         keyEventSink_ = nullptr;
@@ -149,7 +146,6 @@ HRESULT TextService::activateInternal(ITfThreadMgr* threadMgr, TfClientId client
 
 HRESULT TextService::deactivateInternal() {
     debugLog("TextService deactivating");
-    candidateWindow_.hide();
 
     if (threadMgr_ != nullptr) {
         ITfDocumentMgr* focusDoc = nullptr;
@@ -202,21 +198,13 @@ HRESULT TextService::deactivateInternal() {
     return S_OK;
 }
 
-bool TextService::isShortcutModifierPressed() noexcept {
-    // Keep normal Windows/application shortcuts layout-independent.
-    // Ctrl+C/V/A/Z, Alt shortcuts, Win shortcuts and AltGr must bypass the IME.
-    return (GetKeyState(VK_CONTROL) < 0)
-        || (GetKeyState(VK_MENU) < 0)
-        || (GetKeyState(VK_LWIN) < 0)
-        || (GetKeyState(VK_RWIN) < 0);
+bool TextService::isShiftPressed() const noexcept {
+    return (GetKeyState(VK_SHIFT) < 0);
 }
 
 bool TextService::isAsciiLetter(WPARAM keyCode) noexcept {
+    // Letter virtual-key codes are VK_A..VK_Z regardless of Shift state.
     return keyCode >= 'A' && keyCode <= 'Z';
-}
-
-bool TextService::isCandidateNumberKey(WPARAM keyCode) noexcept {
-    return keyCode >= '1' && keyCode <= '9';
 }
 
 wchar_t TextService::toLowerAsciiKey(WPARAM keyCode) noexcept {
@@ -227,34 +215,11 @@ wchar_t TextService::toLowerAsciiKey(WPARAM keyCode) noexcept {
 }
 
 bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcept {
-    // This check is the key to JIS/US-uniform shortcut behavior. We do not
-    // create a JIS build and a US build; shortcuts pass to the host app.
-    if (isShortcutModifierPressed()) {
-        return false;
-    }
-
     if (!enabled_) {
         return isSpaceToggle(keyCode);
     }
 
-    if (isSpaceToggle(keyCode)) {
-        return true;
-    }
-
-    if (candidateWindow_.isVisible()) {
-        if (keyCode == VK_SPACE
-            || keyCode == VK_RETURN
-            || keyCode == VK_ESCAPE
-            || keyCode == VK_BACK
-            || keyCode == VK_UP
-            || keyCode == VK_DOWN
-            || isCandidateNumberKey(keyCode)
-            || isAsciiLetter(keyCode)) {
-            return true;
-        }
-    }
-
-    if (isAsciiLetter(keyCode)) {
+    if (isSpaceToggle(keyCode) || isAsciiLetter(keyCode)) {
         return true;
     }
 
@@ -265,83 +230,9 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
     return false;
 }
 
-bool TextService::openCandidateWindow(ITfContext* context) {
-    const auto candidates = compositionManager_.currentCandidateTexts(9);
-    if (candidates.size() <= 1) {
-        return false;
-    }
-
-    if (!candidateWindow_.show(candidates, 0)) {
-        return false;
-    }
-
-    const HRESULT previewResult = compositionManager_.previewCandidate(context, 0);
-    if (FAILED(previewResult)) {
-        debugLogHr("previewCandidate(0)", previewResult);
-        candidateWindow_.hide();
-        return false;
-    }
-
-    debugLog("Candidate window opened");
-    return true;
-}
-
-HRESULT TextService::moveCandidateSelection(ITfContext* context, int delta) {
-    if (!candidateWindow_.isVisible() || candidateWindow_.candidateCount() == 0) {
-        return S_FALSE;
-    }
-
-    const std::size_t count = candidateWindow_.candidateCount();
-    const std::size_t current = candidateWindow_.selectedIndex();
-    std::size_t next = current;
-
-    if (delta > 0) {
-        next = (current + 1) % count;
-    } else if (delta < 0) {
-        next = current == 0 ? count - 1 : current - 1;
-    }
-
-    const HRESULT hr = compositionManager_.previewCandidate(context, next);
-    if (SUCCEEDED(hr)) {
-        candidateWindow_.setSelection(next);
-    }
-    return hr;
-}
-
-HRESULT TextService::commitSelectedCandidate(ITfContext* context) {
-    if (!candidateWindow_.isVisible()) {
-        return S_FALSE;
-    }
-
-    const std::size_t index = candidateWindow_.selectedIndex();
-    const HRESULT hr = compositionManager_.commitCandidate(context, index);
-    if (SUCCEEDED(hr)) {
-        candidateWindow_.hide();
-    }
-    return hr;
-}
-
-HRESULT TextService::selectCandidateByNumber(ITfContext* context, std::size_t index) {
-    if (!candidateWindow_.isVisible() || index >= candidateWindow_.candidateCount()) {
-        return S_FALSE;
-    }
-
-    const HRESULT hr = compositionManager_.commitCandidate(context, index);
-    if (SUCCEEDED(hr)) {
-        candidateWindow_.hide();
-    }
-    return hr;
-}
-
 HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (context == nullptr) {
         return E_POINTER;
-    }
-
-    // Important: OnKeyDown can still be called by a host after OnTestKeyDown
-    // returned FALSE. Never consume Ctrl/Alt/Win combinations here either.
-    if (isShortcutModifierPressed()) {
-        return S_FALSE;
     }
 
     if (!enabled_) {
@@ -354,12 +245,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     if (isSpaceToggle(keyCode)) {
-        if (candidateWindow_.isVisible()) {
-            const HRESULT commitHr = commitSelectedCandidate(context);
-            if (FAILED(commitHr)) {
-                return commitHr;
-            }
-        } else if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
+        if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
             const HRESULT commitHr = compositionManager_.commitOriginal(context);
             if (FAILED(commitHr)) {
                 debugLogHr("Commit original before mode switch", commitHr);
@@ -370,44 +256,6 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         enabled_ = false;
         debugLog("Switched to English mode");
         return S_OK;
-    }
-
-    if (candidateWindow_.isVisible()) {
-        if (keyCode == VK_SPACE || keyCode == VK_DOWN) {
-            return moveCandidateSelection(context, +1);
-        }
-
-        if (keyCode == VK_UP) {
-            return moveCandidateSelection(context, -1);
-        }
-
-        if (keyCode == VK_RETURN) {
-            return commitSelectedCandidate(context);
-        }
-
-        if (isCandidateNumberKey(keyCode)) {
-            return selectCandidateByNumber(context, static_cast<std::size_t>(keyCode - '1'));
-        }
-
-        if (keyCode == VK_ESCAPE) {
-            candidateWindow_.hide();
-            return compositionManager_.restoreOriginalPreview(context);
-        }
-
-        if (keyCode == VK_BACK) {
-            candidateWindow_.hide();
-            return compositionManager_.deleteBackspace(context);
-        }
-
-        if (isAsciiLetter(keyCode)) {
-            // Continue typing naturally: confirm the highlighted word, then
-            // start the next Myanglish composition with the new letter.
-            const HRESULT commitHr = commitSelectedCandidate(context);
-            if (FAILED(commitHr)) {
-                return commitHr;
-            }
-            return compositionManager_.insertCharacter(context, toLowerAsciiKey(keyCode));
-        }
     }
 
     if (isAsciiLetter(keyCode)) {
@@ -425,10 +273,6 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     if (keyCode == VK_SPACE) {
-        if (openCandidateWindow(context)) {
-            return S_OK;
-        }
-
         const HRESULT hr = compositionManager_.commitBestCandidate(context);
         if (FAILED(hr)) {
             debugLogHr("commitBestCandidate", hr);
@@ -441,7 +285,6 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     if (keyCode == VK_ESCAPE) {
-        candidateWindow_.hide();
         return compositionManager_.cancel(context);
     }
 
@@ -449,9 +292,6 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
 }
 
 HRESULT TextService::onSetFocus(BOOL foreground) {
-    if (!foreground) {
-        candidateWindow_.hide();
-    }
     debugLog(foreground ? "KeyEventSink focus gained" : "KeyEventSink focus lost");
     return S_OK;
 }

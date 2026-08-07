@@ -117,13 +117,6 @@ int main() {
         tests.expectEqual(converter.convertSentence("kinn"), u8"ကင်း", "Master main inn -> င်း");
         tests.expectEqual(converter.convertSentence("kis"), u8"ကစ်", "Master variant is -> စ်");
         tests.expectEqual(converter.convertSentence("kwat"), u8"ကွက်", "Master direct wat -> ွက်");
-        tests.expectEqual(converter.convertSentence("ta"), u8"တ", "Base mapping ta -> တ");
-        tests.expectEqual(converter.convertSentence("tha"), u8"သ", "Base mapping tha -> သ");
-        tests.expectEqual(converter.convertSentence("ha"), u8"ဟ", "Base mapping ha -> ဟ");
-        tests.expectEqual(converter.convertSentence("da"), u8"ဒ", "Base mapping da -> ဒ");
-        tests.expectEqual(converter.convertSentence("dar"), u8"ဒါ", "Tall AA dar -> ဒါ");
-        tests.expectEqual(converter.convertSentence("thy"), u8"သေး", "Lexical spelling thy -> သေး");
-        tests.expectEqual(converter.convertSentence("thay"), u8"သေး", "Lexical spelling thay -> သေး");
 
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");

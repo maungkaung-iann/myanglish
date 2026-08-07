@@ -2,10 +2,8 @@
 
 #include "Globals.h"
 
-#include <cstddef>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <Windows.h>
 #include <msctf.h>
@@ -29,13 +27,8 @@ public:
     bool hasActiveComposition() const noexcept;
     void setClientId(TfClientId clientId) noexcept;
 
-    std::vector<std::wstring> currentCandidateTexts(std::size_t limit = 9) const;
-
     HRESULT insertCharacter(ITfContext* context, wchar_t character);
     HRESULT deleteBackspace(ITfContext* context);
-    HRESULT previewCandidate(ITfContext* context, std::size_t candidateIndex);
-    HRESULT restoreOriginalPreview(ITfContext* context);
-    HRESULT commitCandidate(ITfContext* context, std::size_t candidateIndex);
     HRESULT commitOriginal(ITfContext* context);
     HRESULT commitBestCandidate(ITfContext* context);
     HRESULT cancel(ITfContext* context);
@@ -48,35 +41,20 @@ public:
     enum class EditAction {
         InsertCharacter,
         DeleteBackspace,
-        PreviewCandidate,
-        RestoreOriginalPreview,
-        CommitCandidate,
         CommitOriginal,
         CommitBestCandidate,
         Cancel,
     };
 
-    HRESULT executeEdit(
-        TfEditCookie ec,
-        ITfContext* context,
-        EditAction action,
-        wchar_t character,
-        std::size_t candidateIndex
-    );
+    HRESULT executeEdit(TfEditCookie ec, ITfContext* context, EditAction action, wchar_t character);
 
-    HRESULT requestEdit(
-        ITfContext* context,
-        EditAction action,
-        wchar_t character = 0,
-        std::size_t candidateIndex = 0
-    );
+    HRESULT requestEdit(ITfContext* context, EditAction action, wchar_t character = 0);
 
     HRESULT ensureComposition(TfEditCookie ec, ITfContext* context);
     HRESULT updateCompositionText(TfEditCookie ec, ITfContext* context, const std::wstring& text);
     HRESULT endComposition(TfEditCookie ec);
 
     std::wstring makeCommittedText(bool useBestCandidate) const;
-    std::wstring makeCandidateText(std::size_t candidateIndex) const;
 
     std::filesystem::path dataRoot_;
     std::unique_ptr<myanglish::MyanglishConverter> converter_;

@@ -184,12 +184,14 @@ HRESULT registerTsfProfile() {
         IID_ITfInputProcessorProfiles,
         reinterpret_cast<void**>(&profiles)
     );
+    debugLogHr("profiles CoCreateInstance", hr);
 
     if (FAILED(hr)) {
         return hr;
     }
 
     hr = profiles->Register(CLSID_MyanglishIME);
+    debugLogHr("profiles Register", hr);
     if (FAILED(hr)) {
         profiles->Release();
         return hr;
@@ -205,40 +207,51 @@ HRESULT registerTsfProfile() {
         0,
         0
     );
+    debugLogHr("profiles AddLanguageProfile", hr);
 
-    if (SUCCEEDED(hr)) {
-        // A Burmese profile otherwise falls back to the installed Burmese
-        // hardware layout (for example Myanmar Visual). Myanglish needs Latin
-        // A-Z virtual keys, so use US QWERTY as this TIP's substitute layout.
-        const HKL usLayout = LoadKeyboardLayoutW(
-            kUsKeyboardLayoutName,
-            KLF_SUBSTITUTE_OK
-        );
-
-        if (usLayout == nullptr) {
-            const DWORD error = GetLastError();
-            hr = HRESULT_FROM_WIN32(error == ERROR_SUCCESS ? ERROR_INVALID_HANDLE : error);
-        } else {
-            hr = profiles->SubstituteKeyboardLayout(
-                CLSID_MyanglishIME,
-                kMyanglishLangId,
-                GUID_MyanglishIMEProfile,
-                usLayout
-            );
-        }
+    if (FAILED(hr)) {
+        profiles->Release();
+        return hr;
     }
 
-    if (SUCCEEDED(hr)) {
-        hr = profiles->EnableLanguageProfile(
+    // The substitute keyboard layout is useful, but it is not required for the
+    // TIP to exist. Some Windows configurations return E_FAIL here even after
+    // AddLanguageProfile succeeds. Keep this as best-effort so registration is
+    // not rolled back just because substitution is unavailable.
+    const HKL usLayout = LoadKeyboardLayoutW(
+        kUsKeyboardLayoutName,
+        KLF_SUBSTITUTE_OK
+    );
+
+    if (usLayout == nullptr) {
+        const DWORD error = GetLastError();
+        const HRESULT layoutHr = HRESULT_FROM_WIN32(
+            error == ERROR_SUCCESS ? ERROR_INVALID_HANDLE : error
+        );
+        debugLogHr("LoadKeyboardLayout US", layoutHr);
+    } else {
+        const HRESULT substituteHr = profiles->SubstituteKeyboardLayout(
             CLSID_MyanglishIME,
             kMyanglishLangId,
             GUID_MyanglishIMEProfile,
-            TRUE
+            usLayout
         );
+        debugLogHr("profiles SubstituteKeyboardLayout", substituteHr);
     }
 
+    // Enabling is also best-effort during development. AddLanguageProfile is
+    // the required step; if enabling fails, Windows Settings can still expose
+    // the registered profile and we avoid deleting a valid COM/profile setup.
+    const HRESULT enableHr = profiles->EnableLanguageProfile(
+        CLSID_MyanglishIME,
+        kMyanglishLangId,
+        GUID_MyanglishIMEProfile,
+        TRUE
+    );
+    debugLogHr("profiles EnableLanguageProfile", enableHr);
+
     profiles->Release();
-    return hr;
+    return S_OK;
 }
 
 HRESULT unregisterTsfProfile() {

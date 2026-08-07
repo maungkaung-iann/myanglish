@@ -72,15 +72,13 @@ public:
         CompositionManager* manager,
         ITfContext* context,
         EditAction action,
-        wchar_t character,
-        std::size_t candidateIndex
+        wchar_t character
     )
         : referenceCount_(1),
           manager_(manager),
           context_(context),
           action_(action),
-          character_(character),
-          candidateIndex_(candidateIndex) {
+          character_(character) {
         if (context_ != nullptr) {
             context_->AddRef();
         }
@@ -140,8 +138,7 @@ public:
             editCookie,
             context_,
             action_,
-            character_,
-            candidateIndex_
+            character_
         );
     }
 
@@ -151,7 +148,6 @@ private:
     ITfContext* context_;
     EditAction action_;
     wchar_t character_;
-    std::size_t candidateIndex_;
 };
 
 CompositionManager::CompositionManager(
@@ -217,28 +213,6 @@ void CompositionManager::setClientId(
     clientId_ = clientId;
 }
 
-std::vector<std::wstring> CompositionManager::currentCandidateTexts(
-    std::size_t limit
-) const {
-    std::vector<std::wstring> result;
-    if (buffer_.empty() || converter_ == nullptr || limit == 0) {
-        return result;
-    }
-
-    const auto candidates = converter_->getCandidates(buffer_, limit);
-    result.reserve(candidates.size());
-    for (const auto& candidate : candidates) {
-        if (candidate.burmese.empty()) {
-            continue;
-        }
-        const std::wstring converted = utf8ToUtf16(candidate.burmese);
-        if (!converted.empty()) {
-            result.push_back(converted);
-        }
-    }
-    return result;
-}
-
 HRESULT CompositionManager::insertCharacter(
     ITfContext* context,
     wchar_t character
@@ -256,39 +230,6 @@ HRESULT CompositionManager::deleteBackspace(
     return requestEdit(
         context,
         EditAction::DeleteBackspace
-    );
-}
-
-HRESULT CompositionManager::previewCandidate(
-    ITfContext* context,
-    std::size_t candidateIndex
-) {
-    return requestEdit(
-        context,
-        EditAction::PreviewCandidate,
-        0,
-        candidateIndex
-    );
-}
-
-HRESULT CompositionManager::restoreOriginalPreview(
-    ITfContext* context
-) {
-    return requestEdit(
-        context,
-        EditAction::RestoreOriginalPreview
-    );
-}
-
-HRESULT CompositionManager::commitCandidate(
-    ITfContext* context,
-    std::size_t candidateIndex
-) {
-    return requestEdit(
-        context,
-        EditAction::CommitCandidate,
-        0,
-        candidateIndex
     );
 }
 
@@ -331,8 +272,7 @@ void CompositionManager::clearWithoutContext() noexcept {
 HRESULT CompositionManager::requestEdit(
     ITfContext* context,
     EditAction action,
-    wchar_t character,
-    std::size_t candidateIndex
+    wchar_t character
 ) {
     if (context == nullptr) {
         return E_POINTER;
@@ -347,8 +287,7 @@ HRESULT CompositionManager::requestEdit(
             this,
             context,
             action,
-            character,
-            candidateIndex
+            character
         );
 
     if (session == nullptr) {
@@ -383,8 +322,7 @@ HRESULT CompositionManager::executeEdit(
     TfEditCookie editCookie,
     ITfContext* context,
     EditAction action,
-    wchar_t character,
-    std::size_t candidateIndex
+    wchar_t character
 ) {
     if (context == nullptr) {
         return E_POINTER;
@@ -494,46 +432,18 @@ HRESULT CompositionManager::executeEdit(
         return result;
     }
 
-    case EditAction::PreviewCandidate: {
-        if (buffer_.empty()) {
-            return S_FALSE;
-        }
-
-        const std::wstring candidateText = makeCandidateText(candidateIndex);
-        if (candidateText.empty()) {
-            return E_INVALIDARG;
-        }
-
-        return updateCompositionText(editCookie, context, candidateText);
-    }
-
-    case EditAction::RestoreOriginalPreview: {
-        if (buffer_.empty()) {
-            return S_FALSE;
-        }
-
-        const std::wstring originalText = utf8ToUtf16(buffer_);
-        if (originalText.empty()) {
-            return E_FAIL;
-        }
-
-        return updateCompositionText(editCookie, context, originalText);
-    }
-
-    case EditAction::CommitCandidate:
     case EditAction::CommitOriginal:
     case EditAction::CommitBestCandidate: {
         if (buffer_.empty()) {
             return S_FALSE;
         }
 
-        std::wstring committedText;
-        if (action == EditAction::CommitCandidate) {
-            committedText = makeCandidateText(candidateIndex);
-        } else {
-            const bool useBestCandidate = action == EditAction::CommitBestCandidate;
-            committedText = makeCommittedText(useBestCandidate);
-        }
+        const bool useBestCandidate =
+            action ==
+            EditAction::CommitBestCandidate;
+
+        const std::wstring committedText =
+            makeCommittedText(useBestCandidate);
 
         if (committedText.empty()) {
             return E_FAIL;
@@ -816,21 +726,5 @@ std::wstring CompositionManager::makeCommittedText(
 
     return utf8ToUtf16(buffer_);
 }
-
-std::wstring CompositionManager::makeCandidateText(
-    std::size_t candidateIndex
-) const {
-    if (buffer_.empty() || converter_ == nullptr) {
-        return {};
-    }
-
-    const auto candidates = converter_->getCandidates(buffer_, candidateIndex + 1);
-    if (candidateIndex >= candidates.size() || candidates[candidateIndex].burmese.empty()) {
-        return {};
-    }
-
-    return utf8ToUtf16(candidates[candidateIndex].burmese);
-}
-
 
 } // namespace myanglish::ime

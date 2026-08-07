@@ -96,15 +96,15 @@ bool startsWith(const std::string& text, const std::string& prefix) {
 }
 
 const std::vector<BaseConsonantRule>& baseConsonantRules() {
-    // One deterministic base mapping. Ambiguous real-world spellings belong
-    // in dictionary/candidate data rather than duplicate equal-length rules.
     static const std::vector<BaseConsonantRule> rules = {
         {"ng", "င"},
         {"ny", "ည"},
         {"kh", "ခ"},
+        {"g", "ဂ"},
         {"ph", "ဖ"},
-        {"th", "သ"},
-        {"ht", "ထ"},
+        {"b", "ဘ"},
+        {"t", "သ"},
+        {"h", "ထ"},
         {"ch", "ချ"},
         {"sh", "ရှ"},
         {"k", "က"},
@@ -118,24 +118,15 @@ const std::vector<BaseConsonantRule>& baseConsonantRules() {
         {"b", "ဘ"},
         {"m", "မ"},
         {"y", "ယ"},
+        {"y", "ရ"},
         {"l", "လ"},
         {"w", "ဝ"},
+        {"s", "ဆ"},
         {"z", "ဇ"},
         {"h", "ဟ"},
     };
 
     return rules;
-}
-
-bool usesTallAa(const std::string& baseLatin) {
-    // Myanmar U+102B TALL AA is used with these base shapes. This keeps
-    // dar -> ဒါ while kar -> ကာ, and also handles ခါ/ဂါ/ငါ/ပါ/ဝါ.
-    return baseLatin == "kh"
-        || baseLatin == "g"
-        || baseLatin == "ng"
-        || baseLatin == "d"
-        || baseLatin == "p"
-        || baseLatin == "w";
 }
 
 const std::vector<MedialRule>& medialRules() {
@@ -343,7 +334,7 @@ std::vector<Candidate> MyanglishConverter::buildRuleCandidates(const std::string
     std::vector<Candidate> candidates;
 
     auto dependentOutputFor = [](const std::string& baseLatin, const std::string& rhymeCode, const RhymeRule& rule) {
-        if (rhymeCode == "ar" && usesTallAa(baseLatin)) {
+        if (rhymeCode == "ar" && (baseLatin == "kh" || baseLatin == "ng")) {
             return std::string("ါ");
         }
 
@@ -410,7 +401,7 @@ std::vector<Candidate> MyanglishConverter::buildRuleCandidates(const std::string
         }
         for (const auto& rule : it->second) {
             std::string burmeseRhyme = rule.burmese;
-            if (burmeseRhyme == "ာ" && usesTallAa(baseLatin)) {
+            if (burmeseRhyme == "ာ" && (baseLatin == "kh" || baseLatin == "ng")) {
                 burmeseRhyme = "ါ";
             }
             candidates.push_back(Candidate{prefixOutput + burmeseRhyme, rule.score});
