@@ -6,3 +6,5 @@ out/
 .vs/
 *.pdb
 *.ilk
+
+backup-alpha02-*/
