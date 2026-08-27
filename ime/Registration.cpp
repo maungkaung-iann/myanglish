@@ -1,10 +1,9 @@
-#include "Registration.h"
+﻿#include "Registration.h"
 
 #include "Globals.h"
 #include "Guids.h"
 
 #include <array>
-#include <filesystem>
 #include <string>
 
 #include <Windows.h>
@@ -18,20 +17,14 @@ namespace {
 // Burmese (Myanmar) language ID: 0x0455, my-MM.
 constexpr LANGID kMyanglishLangId = 0x0455;
 constexpr const wchar_t kProfileDescription[] = L"Myanglish IME";
+constexpr const wchar_t kUsKeyboardLayoutName[] = L"00000409";
 
 std::wstring guidToString(REFGUID guid) {
     std::array<wchar_t, 64> buffer{};
-
-    const int length = StringFromGUID2(
-        guid,
-        buffer.data(),
-        static_cast<int>(buffer.size())
-    );
-
+    const int length = StringFromGUID2(guid, buffer.data(), static_cast<int>(buffer.size()));
     if (length <= 0) {
         return {};
     }
-
     return std::wstring(buffer.data());
 }
 
@@ -42,7 +35,6 @@ HRESULT setRegistryStringValue(
     const std::wstring& value
 ) {
     HKEY key = nullptr;
-
     const LONG createResult = RegCreateKeyExW(
         root,
         subKey.c_str(),
@@ -59,67 +51,40 @@ HRESULT setRegistryStringValue(
         return HRESULT_FROM_WIN32(createResult);
     }
 
-    const wchar_t* registryValueName =
-        valueName.empty() ? nullptr : valueName.c_str();
-
     const LONG setResult = RegSetValueExW(
         key,
-        registryValueName,
+        valueName.empty() ? nullptr : valueName.c_str(),
         0,
         REG_SZ,
         reinterpret_cast<const BYTE*>(value.c_str()),
-        static_cast<DWORD>(
-            (value.size() + 1) * sizeof(wchar_t)
-        )
+        static_cast<DWORD>((value.size() + 1) * sizeof(wchar_t))
     );
 
     RegCloseKey(key);
-
-    if (setResult != ERROR_SUCCESS) {
-        return HRESULT_FROM_WIN32(setResult);
-    }
-
-    return S_OK;
+    return setResult == ERROR_SUCCESS ? S_OK : HRESULT_FROM_WIN32(setResult);
 }
 
 HRESULT registerComServer() {
-    const std::wstring clsidString =
-        guidToString(CLSID_MyanglishIME);
-
+    const std::wstring clsidString = guidToString(CLSID_MyanglishIME);
     if (clsidString.empty()) {
         return E_FAIL;
     }
 
     wchar_t modulePathBuffer[32768] = {};
-
     const DWORD moduleLength = GetModuleFileNameW(
         moduleHandle(),
         modulePathBuffer,
         static_cast<DWORD>(std::size(modulePathBuffer))
     );
 
-    if (
-        moduleLength == 0 ||
-        moduleLength >= std::size(modulePathBuffer)
-    ) {
+    if (moduleLength == 0 || moduleLength >= std::size(modulePathBuffer)) {
         const DWORD error = GetLastError();
-        return HRESULT_FROM_WIN32(
-            error == ERROR_SUCCESS
-                ? ERROR_INSUFFICIENT_BUFFER
-                : error
-        );
+        return HRESULT_FROM_WIN32(error == ERROR_SUCCESS ? ERROR_INSUFFICIENT_BUFFER : error);
     }
 
-    const std::wstring baseKey =
-        L"Software\\Classes\\CLSID\\" + clsidString;
+    const std::wstring baseKey = L"Software\\Classes\\CLSID\\" + clsidString;
 
-    HRESULT hr = setRegistryStringValue(
-        HKEY_CURRENT_USER,
-        baseKey,
-        L"",
-        L"Myanglish IME"
-    );
-
+    HRESULT hr = setRegistryStringValue(HKEY_CURRENT_USER, baseKey, L"", L"Myanglish IME");
     if (FAILED(hr)) {
         return hr;
     }
@@ -130,7 +95,6 @@ HRESULT registerComServer() {
         L"",
         modulePathBuffer
     );
-
     if (FAILED(hr)) {
         return hr;
     }
@@ -144,35 +108,25 @@ HRESULT registerComServer() {
 }
 
 HRESULT unregisterComServer() {
-    const std::wstring clsidString =
-        guidToString(CLSID_MyanglishIME);
-
+    const std::wstring clsidString = guidToString(CLSID_MyanglishIME);
     if (clsidString.empty()) {
         return E_FAIL;
     }
 
-    const std::wstring baseKey =
-        L"Software\\Classes\\CLSID\\" + clsidString;
+    const std::wstring baseKey = L"Software\\Classes\\CLSID\\" + clsidString;
+    const LONG deleteResult = RegDeleteTreeW(HKEY_CURRENT_USER, baseKey.c_str());
 
-    const LONG deleteResult = RegDeleteTreeW(
-        HKEY_CURRENT_USER,
-        baseKey.c_str()
-    );
-
-    if (
-        deleteResult != ERROR_SUCCESS &&
-        deleteResult != ERROR_FILE_NOT_FOUND &&
-        deleteResult != ERROR_PATH_NOT_FOUND
-    ) {
-        return HRESULT_FROM_WIN32(deleteResult);
+    if (deleteResult == ERROR_SUCCESS ||
+        deleteResult == ERROR_FILE_NOT_FOUND ||
+        deleteResult == ERROR_PATH_NOT_FOUND) {
+        return S_OK;
     }
 
-    return S_OK;
+    return HRESULT_FROM_WIN32(deleteResult);
 }
 
 HRESULT registerTsfCategories() {
     ITfCategoryMgr* categoryManager = nullptr;
-
     HRESULT hr = CoCreateInstance(
         CLSID_TF_CategoryMgr,
         nullptr,
@@ -190,6 +144,13 @@ HRESULT registerTsfCategories() {
         GUID_TFCAT_TIP_KEYBOARD,
         CLSID_MyanglishIME
     );
+    if (SUCCEEDED(hr)) {
+        hr = categoryManager->RegisterCategory(
+            CLSID_MyanglishIME,
+            GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
+            CLSID_MyanglishIME
+        );
+    }
 
     categoryManager->Release();
     return hr;
@@ -197,7 +158,6 @@ HRESULT registerTsfCategories() {
 
 HRESULT unregisterTsfCategories() {
     ITfCategoryMgr* categoryManager = nullptr;
-
     HRESULT hr = CoCreateInstance(
         CLSID_TF_CategoryMgr,
         nullptr,
@@ -210,19 +170,26 @@ HRESULT unregisterTsfCategories() {
         return hr;
     }
 
-    hr = categoryManager->UnregisterCategory(
+        // unregister Myanglish system tray support
+    (void)categoryManager->UnregisterCategory(
+        CLSID_MyanglishIME,
+        GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
+        CLSID_MyanglishIME
+    );
+hr = categoryManager->UnregisterCategory(
         CLSID_MyanglishIME,
         GUID_TFCAT_TIP_KEYBOARD,
         CLSID_MyanglishIME
     );
 
     categoryManager->Release();
-    return hr;
+
+    // Make unregistration repeatable during development.
+    return hr == E_FAIL ? S_OK : hr;
 }
 
 HRESULT registerTsfProfile() {
     ITfInputProcessorProfiles* profiles = nullptr;
-
     HRESULT hr = CoCreateInstance(
         CLSID_TF_InputProcessorProfiles,
         nullptr,
@@ -230,37 +197,97 @@ HRESULT registerTsfProfile() {
         IID_ITfInputProcessorProfiles,
         reinterpret_cast<void**>(&profiles)
     );
+    debugLogHr("profiles CoCreateInstance", hr);
 
     if (FAILED(hr)) {
         return hr;
     }
 
-    // First register the text service itself.
     hr = profiles->Register(CLSID_MyanglishIME);
+    debugLogHr("profiles Register", hr);
+    if (FAILED(hr)) {
+        profiles->Release();
+        return hr;
+    }
 
-    if (SUCCEEDED(hr)) {
-        // Then add its Burmese/Myanmar language profile.
-        hr = profiles->AddLanguageProfile(
+    wchar_t profileIconPath[32768] = {};
+    const DWORD profileIconLength = GetModuleFileNameW(
+        moduleHandle(),
+        profileIconPath,
+        static_cast<DWORD>(std::size(profileIconPath))
+    );
+
+    if (
+        profileIconLength == 0 ||
+        profileIconLength >= std::size(profileIconPath)
+    ) {
+        const DWORD error = GetLastError();
+        hr = HRESULT_FROM_WIN32(
+            error == ERROR_SUCCESS
+                ? ERROR_INSUFFICIENT_BUFFER
+                : error
+        );
+    } else {
+    hr = profiles->AddLanguageProfile(
+        CLSID_MyanglishIME,
+        kMyanglishLangId,
+        GUID_MyanglishIMEProfile,
+        kProfileDescription,
+        static_cast<ULONG>(std::size(kProfileDescription) - 1),
+                profileIconPath,
+                profileIconLength,
+                0
+            );
+    }
+    debugLogHr("profiles AddLanguageProfile", hr);
+
+    if (FAILED(hr)) {
+        profiles->Release();
+        return hr;
+    }
+
+    // The substitute keyboard layout is useful, but it is not required for the
+    // TIP to exist. Some Windows configurations return E_FAIL here even after
+    // AddLanguageProfile succeeds. Keep this as best-effort so registration is
+    // not rolled back just because substitution is unavailable.
+    const HKL usLayout = LoadKeyboardLayoutW(
+        kUsKeyboardLayoutName,
+        KLF_SUBSTITUTE_OK
+    );
+
+    if (usLayout == nullptr) {
+        const DWORD error = GetLastError();
+        const HRESULT layoutHr = HRESULT_FROM_WIN32(
+            error == ERROR_SUCCESS ? ERROR_INVALID_HANDLE : error
+        );
+        debugLogHr("LoadKeyboardLayout US", layoutHr);
+    } else {
+        const HRESULT substituteHr = profiles->SubstituteKeyboardLayout(
             CLSID_MyanglishIME,
             kMyanglishLangId,
             GUID_MyanglishIMEProfile,
-            kProfileDescription,
-            static_cast<ULONG>(
-                std::size(kProfileDescription) - 1
-            ),
-            nullptr,
-            0,
-            0
+            usLayout
         );
+        debugLogHr("profiles SubstituteKeyboardLayout", substituteHr);
     }
 
+    // Enabling is also best-effort during development. AddLanguageProfile is
+    // the required step; if enabling fails, Windows Settings can still expose
+    // the registered profile and we avoid deleting a valid COM/profile setup.
+    const HRESULT enableHr = profiles->EnableLanguageProfile(
+        CLSID_MyanglishIME,
+        kMyanglishLangId,
+        GUID_MyanglishIMEProfile,
+        TRUE
+    );
+    debugLogHr("profiles EnableLanguageProfile", enableHr);
+
     profiles->Release();
-    return hr;
+    return S_OK;
 }
 
 HRESULT unregisterTsfProfile() {
     ITfInputProcessorProfiles* profiles = nullptr;
-
     HRESULT hr = CoCreateInstance(
         CLSID_TF_InputProcessorProfiles,
         nullptr,
@@ -273,45 +300,46 @@ HRESULT unregisterTsfProfile() {
         return hr;
     }
 
-    // Remove the language profile before unregistering the service.
-    const HRESULT removeResult =
-        profiles->RemoveLanguageProfile(
-            CLSID_MyanglishIME,
-            kMyanglishLangId,
-            GUID_MyanglishIMEProfile
-        );
+    // Disable first. Missing profiles can return E_FAIL during repeated dev
+    // unregisters, so those cases are intentionally treated as already clean.
+    const HRESULT disableResult = profiles->EnableLanguageProfile(
+        CLSID_MyanglishIME,
+        kMyanglishLangId,
+        GUID_MyanglishIMEProfile,
+        FALSE
+    );
 
-    const HRESULT unregisterResult =
-        profiles->Unregister(CLSID_MyanglishIME);
+    const HRESULT removeResult = profiles->RemoveLanguageProfile(
+        CLSID_MyanglishIME,
+        kMyanglishLangId,
+        GUID_MyanglishIMEProfile
+    );
 
+    const HRESULT unregisterResult = profiles->Unregister(CLSID_MyanglishIME);
     profiles->Release();
 
-    if (
-        FAILED(removeResult) &&
-        removeResult != E_FAIL
-    ) {
+    if (FAILED(disableResult) && disableResult != E_FAIL) {
+        return disableResult;
+    }
+    if (FAILED(removeResult) && removeResult != E_FAIL) {
         return removeResult;
     }
+    if (FAILED(unregisterResult) && unregisterResult != E_FAIL) {
+        return unregisterResult;
+    }
 
-    return unregisterResult;
+    return S_OK;
 }
 
-HRESULT initializeComForRegistration(
-    bool& shouldUninitialize
-) {
+HRESULT initializeComForRegistration(bool& shouldUninitialize) {
     shouldUninitialize = false;
-
-    const HRESULT hr = CoInitializeEx(
-        nullptr,
-        COINIT_APARTMENTTHREADED
-    );
+    const HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
     if (SUCCEEDED(hr)) {
         shouldUninitialize = true;
         return S_OK;
     }
 
-    // COM is already initialized using another apartment model.
     if (hr == RPC_E_CHANGED_MODE) {
         return S_OK;
     }
@@ -323,26 +351,27 @@ HRESULT initializeComForRegistration(
 
 HRESULT registerServer() {
     bool shouldUninitialize = false;
-
-    HRESULT hr =
-        initializeComForRegistration(shouldUninitialize);
-
+    HRESULT hr = initializeComForRegistration(shouldUninitialize);
     if (FAILED(hr)) {
         return hr;
     }
 
+    debugLog("DllRegisterServer: start");
+
     hr = registerComServer();
+    debugLogHr("registerComServer", hr);
 
     if (SUCCEEDED(hr)) {
         hr = registerTsfProfile();
+        debugLogHr("registerTsfProfile", hr);
     }
 
     if (SUCCEEDED(hr)) {
         hr = registerTsfCategories();
+        debugLogHr("registerTsfCategories", hr);
     }
 
     if (FAILED(hr)) {
-        // Roll back partial registration.
         unregisterTsfCategories();
         unregisterTsfProfile();
         unregisterComServer();
@@ -357,22 +386,20 @@ HRESULT registerServer() {
 
 HRESULT unregisterServer() {
     bool shouldUninitialize = false;
-
-    HRESULT hr =
-        initializeComForRegistration(shouldUninitialize);
-
+    HRESULT hr = initializeComForRegistration(shouldUninitialize);
     if (FAILED(hr)) {
         return hr;
     }
 
-    const HRESULT categoryResult =
-        unregisterTsfCategories();
+    debugLog("DllUnregisterServer: start");
 
-    const HRESULT profileResult =
-        unregisterTsfProfile();
+    const HRESULT categoryResult = unregisterTsfCategories();
+    const HRESULT profileResult = unregisterTsfProfile();
+    const HRESULT comResult = unregisterComServer();
 
-    const HRESULT comResult =
-        unregisterComServer();
+    debugLogHr("unregisterTsfCategories", categoryResult);
+    debugLogHr("unregisterTsfProfile", profileResult);
+    debugLogHr("unregisterComServer", comResult);
 
     if (shouldUninitialize) {
         CoUninitialize();
@@ -381,12 +408,12 @@ HRESULT unregisterServer() {
     if (FAILED(categoryResult)) {
         return categoryResult;
     }
-
     if (FAILED(profileResult)) {
         return profileResult;
     }
-
     return comResult;
 }
 
 } // namespace myanglish::ime
+
+

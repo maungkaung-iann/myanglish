@@ -2,8 +2,8 @@
 #include "UnicodeUtils.h"
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
+#include <system_error>
 #include <utility>
 
 namespace myanglish {
@@ -66,13 +66,36 @@ bool Dictionary::loadFromCsv(
     const std::filesystem::path& path,
     std::string* errorMessage
 ) {
-    entries_.clear();
-    byKey_.clear();
-    longestPhraseLength_ = 1;
+    return readCsv(path, true, false, errorMessage);
+}
+
+bool Dictionary::appendFromCsv(
+    const std::filesystem::path& path,
+    std::string* errorMessage,
+    bool missingIsOk
+) {
+    return readCsv(path, false, missingIsOk, errorMessage);
+}
+
+bool Dictionary::readCsv(
+    const std::filesystem::path& path,
+    bool clearFirst,
+    bool missingIsOk,
+    std::string* errorMessage
+) {
+    if (clearFirst) {
+        entries_.clear();
+        byKey_.clear();
+        longestPhraseLength_ = 1;
+    }
 
     std::ifstream file(path, std::ios::binary);
 
     if (!file.is_open()) {
+        if (missingIsOk) {
+            return true;
+        }
+
         if (errorMessage != nullptr) {
             *errorMessage =
                 "Could not open dictionary file: " + path.u8string();
@@ -83,6 +106,7 @@ bool Dictionary::loadFromCsv(
 
     std::string line;
     std::size_t lineNumber = 0;
+    std::size_t addedCount = 0;
 
     while (std::getline(file, line)) {
         ++lineNumber;
@@ -110,7 +134,8 @@ bool Dictionary::loadFromCsv(
             if (errorMessage != nullptr) {
                 *errorMessage =
                     "Invalid CSV format on line " +
-                    std::to_string(lineNumber);
+                    std::to_string(lineNumber) +
+                    " in " + path.u8string();
             }
 
             return false;
@@ -128,7 +153,8 @@ bool Dictionary::loadFromCsv(
             if (errorMessage != nullptr) {
                 *errorMessage =
                     "Empty dictionary value on line " +
-                    std::to_string(lineNumber);
+                    std::to_string(lineNumber) +
+                    " in " + path.u8string();
             }
 
             return false;
@@ -143,76 +169,50 @@ bool Dictionary::loadFromCsv(
                 *errorMessage =
                     "Invalid frequency on line " +
                     std::to_string(lineNumber) +
-                    ": " +
-                    frequencyText;
+                    " in " + path.u8string() +
+                    ": " + frequencyText;
             }
 
             return false;
         }
 
-        DictionaryEntry entry{
-            myanglish,
-            burmese,
+        addEntry(DictionaryEntry{
+            std::move(myanglish),
+            std::move(burmese),
             frequency
-        };
-
-        entries_.push_back(entry);
-
-        const std::string lookupKey =
-            makeLookupKey(myanglish);
-
-        byKey_[lookupKey].push_back(entry);
-
-        const std::size_t phraseLength =
-            countWords(myanglish);
-
-        if (phraseLength > longestPhraseLength_) {
-            longestPhraseLength_ = phraseLength;
-        }
+        });
+        ++addedCount;
     }
 
-    if (entries_.empty()) {
+    if (clearFirst && addedCount == 0) {
         if (errorMessage != nullptr) {
             *errorMessage =
-                "Dictionary file is empty: " +
-                path.u8string();
+                "Dictionary file is empty: " + path.u8string();
         }
 
         return false;
     }
 
-    // Temporary debug information.
-    std::cout
-        << "[Dictionary Debug] Path: "
-        << path.string()
-        << '\n';
+    return true;
+}
 
-    std::cout
-        << "[Dictionary Debug] Loaded entries: "
-        << entries_.size()
-        << '\n';
+void Dictionary::addEntry(DictionaryEntry entry) {
+    entry.myanglish = toLowerAscii(trim(entry.myanglish));
+    entry.burmese = trim(entry.burmese);
 
-    const auto bEntries = findEntries("b");
-
-    std::cout
-        << "[Dictionary Debug] Entries for b: "
-        << bEntries.size()
-        << '\n';
-
-    for (const auto& entry : bEntries) {
-        std::cout
-            << "[Dictionary Debug] "
-            << entry.myanglish
-            << " -> "
-            << entry.burmese
-            << " (frequency "
-            << entry.frequency
-            << ")\n";
+    if (entry.myanglish.empty() || entry.burmese.empty()) {
+        return;
     }
 
-    std::cout << '\n';
+    const std::string lookupKey = makeLookupKey(entry.myanglish);
+    const std::size_t phraseLength = countWords(entry.myanglish);
 
-    return true;
+    entries_.push_back(entry);
+    byKey_[lookupKey].push_back(std::move(entry));
+
+    if (phraseLength > longestPhraseLength_) {
+        longestPhraseLength_ = phraseLength;
+    }
 }
 
 const std::vector<DictionaryEntry>&
@@ -224,8 +224,7 @@ std::vector<DictionaryEntry>
 Dictionary::findEntries(
     const std::string& myanglish
 ) const {
-    const std::string lookupKey =
-        makeLookupKey(myanglish);
+    const std::string lookupKey = makeLookupKey(myanglish);
 
     const auto it = byKey_.find(lookupKey);
 
@@ -247,4 +246,4 @@ std::string Dictionary::makeLookupKey(
     return toLowerAscii(trim(text));
 }
 
-}
+} // namespace myanglish

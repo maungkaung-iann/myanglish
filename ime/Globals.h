@@ -25,7 +25,13 @@ std::string utf16ToUtf8(std::wstring_view text);
 std::filesystem::path moduleDirectory();
 std::filesystem::path resolveDataRoot();
 std::filesystem::path resolveDictionaryPath();
+std::filesystem::path userDictionaryPath();
+std::filesystem::path userHistoryPath();
+std::filesystem::path settingsPath();
+bool liveCandidatePopupEnabled() noexcept;
+std::filesystem::path debugLogPath();
 
 void debugLog(std::string_view message) noexcept;
+void debugLogHr(std::string_view operation, HRESULT hr) noexcept;
 
 } // namespace myanglish::ime
