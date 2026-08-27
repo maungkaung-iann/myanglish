@@ -55,6 +55,21 @@ TfGuidAtom candidateIndicatorAtom(bool candidateAvailable) {
     return cached;
 }
 
+bool isAutoSpacedMyanmarPunctuation(wchar_t character) {
+    return character == static_cast<wchar_t>(0x104A)  // ၊
+        || character == static_cast<wchar_t>(0x104B); // ။
+}
+
+void appendLiteralWithAutoSpace(
+    std::wstring& text,
+    wchar_t character
+) {
+    text.push_back(character);
+    if (isAutoSpacedMyanmarPunctuation(character)) {
+        text.push_back(L' ');
+    }
+}
+
 
 class CompositionSink final : public ITfCompositionSink {
 public:
@@ -318,6 +333,19 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
         return result;
     }
 
+    // R1.16: explicitly tagged loanwords always offer their original Roman
+    // spelling as candidate #1. Myanmar transliterations follow at #2 onward.
+    // Stack/kinzi compositions never offer a Roman candidate.
+    if (isRawLoanwordCandidate(0)) {
+        const std::wstring raw = utf8ToUtf16(buffer_);
+        if (!raw.empty()) {
+            result.push_back(raw);
+        }
+    }
+    if (result.size() >= limit) {
+        return result;
+    }
+
     // Stable 0.10.8.3 pipeline first; adaptive ranking is only a post-process.
     if (converter_ != nullptr) {
         const std::size_t fetchLimit = std::max<std::size_t>(limit, 32);
@@ -371,6 +399,13 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
         );
 
         for (const auto& item : ranked) {
+            const bool duplicate = std::any_of(
+                result.begin(), result.end(),
+                [&](const std::wstring& text) { return text == item.text; }
+            );
+            if (duplicate) {
+                continue;
+            }
             result.push_back(item.text);
             if (result.size() >= limit) {
                 break;
@@ -385,10 +420,13 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
 void CompositionManager::loadLoanwordInputs() {
     loanwordInputs_.clear();
 
-    // Core reviewed loanwords.csv: every non-header row is a loan word.
-    {
+    // Every row in both reviewed loanword candidate files is a loanword.
+    for (const auto& loanwordFile : {
+             dataRoot_ / "data" / "loanwords.csv",
+             dataRoot_ / "data" / "imported_loanwords_alpha1083_pack2.csv"
+         }) {
         std::ifstream file(
-            dataRoot_ / "data" / "loanwords.csv",
+            loanwordFile,
             std::ios::binary
         );
 
@@ -515,6 +553,16 @@ bool CompositionManager::isCurrentLoanword() const noexcept {
 
     return loanwordInputs_.find(raw)
         != loanwordInputs_.end();
+}
+
+bool CompositionManager::isRawLoanwordCandidate(
+    std::size_t candidateIndex
+) const noexcept {
+    return candidateIndex == 0
+        && isCurrentLoanword()
+        && !stackPrefixEnabled_
+        && stackJoinPrefix_.empty()
+        && !kinziPending_;
 }
 
 void CompositionManager::loadUserHistory() {
@@ -929,6 +977,74 @@ HRESULT CompositionManager::applyCandidateIndicator(
     return hr;
 }
 
+bool CompositionManager::needsLeadingRawBoundarySpace(
+    TfEditCookie editCookie
+) const {
+    if (composition_ == nullptr) {
+        return false;
+    }
+
+    ITfRange* compositionRange = nullptr;
+    const HRESULT rangeResult = composition_->GetRange(&compositionRange);
+    if (FAILED(rangeResult) || compositionRange == nullptr) {
+        if (compositionRange != nullptr) {
+            compositionRange->Release();
+        }
+        return false;
+    }
+
+    ITfRange* previousRange = nullptr;
+    HRESULT previousResult = compositionRange->Clone(&previousRange);
+    compositionRange->Release();
+
+    if (SUCCEEDED(previousResult) && previousRange != nullptr) {
+        previousResult = previousRange->Collapse(
+            editCookie,
+            TF_ANCHOR_START
+        );
+    }
+
+    LONG shifted = 0;
+    if (SUCCEEDED(previousResult) && previousRange != nullptr) {
+        previousResult = previousRange->ShiftStart(
+            editCookie,
+            -1,
+            &shifted,
+            nullptr
+        );
+    }
+
+    bool needsSpace = false;
+    if (SUCCEEDED(previousResult)
+        && previousRange != nullptr
+        && shifted == -1) {
+        wchar_t previousText[2]{};
+        ULONG previousLength = 0;
+        const HRESULT readResult = previousRange->GetText(
+            editCookie,
+            0,
+            previousText,
+            1,
+            &previousLength
+        );
+
+        if (SUCCEEDED(readResult) && previousLength == 1) {
+            const wchar_t previous = previousText[0];
+            const bool previousIsWhitespace =
+                previous == L' '
+                || previous == L'\t'
+                || previous == L'\r'
+                || previous == L'\n';
+            needsSpace = !previousIsWhitespace;
+        }
+    }
+
+    if (previousRange != nullptr) {
+        previousRange->Release();
+    }
+    return needsSpace;
+}
+
 HRESULT CompositionManager::requestEdit(
     ITfContext* context,
     EditAction action,
@@ -1124,13 +1240,21 @@ HRESULT CompositionManager::executeEdit(
             return E_INVALIDARG;
         }
 
+        std::wstring preview = candidates[candidateIndex];
+        if (isRawLoanwordCandidate(candidateIndex)) {
+            if (needsLeadingRawBoundarySpace(editCookie)) {
+                preview.insert(preview.begin(), L' ');
+            }
+            preview.push_back(L' ');
+        }
+
         rawPreview_ = false;
         const HRESULT previewResult = updateCompositionText(
             editCookie,
             context,
             kinziPending_
-                ? candidates[candidateIndex]
-                : (stackJoinPrefix_ + candidates[candidateIndex])
+                ? preview
+                : (stackJoinPrefix_ + preview)
         );
         if (SUCCEEDED(previewResult)) {
             lastPreviewCandidate_ = candidates[candidateIndex];
@@ -2132,12 +2256,13 @@ HRESULT CompositionManager::executeEdit(
         }
 
         if (action == EditAction::CommitVisiblePreviewAndInsertLiteral) {
-            const wchar_t literal = character;
+            std::wstring literalText;
+            appendLiteralWithAutoSpace(literalText, character);
             result = acceptedEnd->SetText(
                 editCookie,
                 0,
-                &literal,
-                1
+                literalText.c_str(),
+                static_cast<LONG>(literalText.size())
             );
             if (SUCCEEDED(result)) {
                 result = acceptedEnd->Collapse(editCookie, TF_ANCHOR_END);
@@ -2285,7 +2410,8 @@ HRESULT CompositionManager::executeEdit(
         if (FAILED(result)) {
             return result;
         }
-        const std::wstring literalText(1, character);
+        std::wstring literalText;
+        appendLiteralWithAutoSpace(literalText, character);
         result = updateCompositionText(editCookie, context, literalText);
         if (FAILED(result)) {
             return result;
@@ -2326,7 +2452,7 @@ HRESULT CompositionManager::executeEdit(
         if (!stackJoinPrefix_.empty()) {
             currentVisible = stackJoinPrefix_ + currentVisible;
         }
-        currentVisible.push_back(character);
+        appendLiteralWithAutoSpace(currentVisible, character);
         const HRESULT updateResult = updateCompositionText(editCookie, context, currentVisible);
         if (FAILED(updateResult)) {
             return updateResult;
@@ -2358,7 +2484,7 @@ HRESULT CompositionManager::executeEdit(
             visible = stackJoinPrefix_ + visible;
         }
 
-        // R1.12 — smart boundary spacing, implemented INSIDE the existing
+        // R1.12/R1.16 — smart boundary spacing, implemented INSIDE the existing
         // stable raw-commit action.  No Space-key dispatch/candidate logic is
         // changed.
         //
@@ -2372,88 +2498,8 @@ HRESULT CompositionManager::executeEdit(
         // composition.  Because the space becomes part of the composition
         // text itself, we do not edit committed document text or move the
         // host caret/range outside the composition.
-        bool needsLeadingBoundarySpace = false;
-
-        if (composition_ != nullptr) {
-            ITfRange* compositionRange = nullptr;
-            const HRESULT rangeResult =
-                composition_->GetRange(&compositionRange);
-
-            if (
-                SUCCEEDED(rangeResult)
-                && compositionRange != nullptr
-            ) {
-                ITfRange* previousRange = nullptr;
-                HRESULT previousResult =
-                    compositionRange->Clone(&previousRange);
-
-                if (
-                    SUCCEEDED(previousResult)
-                    && previousRange != nullptr
-                ) {
-                    previousResult =
-                        previousRange->Collapse(
-                            editCookie,
-                            TF_ANCHOR_START
-                        );
-                }
-
-                LONG shifted = 0;
-                if (
-                    SUCCEEDED(previousResult)
-                    && previousRange != nullptr
-                ) {
-                    previousResult =
-                        previousRange->ShiftStart(
-                            editCookie,
-                            -1,
-                            &shifted,
-                            nullptr
-                        );
-                }
-
-                if (
-                    SUCCEEDED(previousResult)
-                    && previousRange != nullptr
-                    && shifted == -1
-                ) {
-                    wchar_t previousText[2]{};
-                    ULONG previousLength = 0;
-
-                    const HRESULT readResult =
-                        previousRange->GetText(
-                            editCookie,
-                            0,
-                            previousText,
-                            1,
-                            &previousLength
-                        );
-
-                    if (
-                        SUCCEEDED(readResult)
-                        && previousLength == 1
-                    ) {
-                        const wchar_t previous =
-                            previousText[0];
-
-                        const bool previousIsWhitespace =
-                            previous == L' '
-                            || previous == L'\t'
-                            || previous == L'\r'
-                            || previous == L'\n';
-
-                        needsLeadingBoundarySpace =
-                            !previousIsWhitespace;
-                    }
-                }
-
-                if (previousRange != nullptr) {
-                    previousRange->Release();
-                }
-
-                compositionRange->Release();
-            }
-        }
+        const bool needsLeadingBoundarySpace =
+            needsLeadingRawBoundarySpace(editCookie);
 
         if (needsLeadingBoundarySpace) {
             visible.insert(
@@ -2464,7 +2510,7 @@ HRESULT CompositionManager::executeEdit(
 
         // KEEP the confirmed stable behavior: raw English commit always gets
         // the caller-provided trailing literal.  Space callers pass L' '.
-        visible.push_back(character);
+        appendLiteralWithAutoSpace(visible, character);
 
         const HRESULT updateResult =
             updateCompositionText(

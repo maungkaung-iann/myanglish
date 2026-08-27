@@ -609,7 +609,9 @@ HRESULT TextService::commitVisibleOnFocusLoss() noexcept {
     // every candidate/conversion flag so no other app can inherit stale state.
     HRESULT hr = S_FALSE;
     if (conversionActive_ || candidateSelectionActive_) {
-        hr = compositionManager_.commitCandidate(lastContext_, selectedCandidateIndex_);
+        hr = compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_)
+            ? compositionManager_.commitOriginalAndInsertLiteral(lastContext_, L' ')
+            : compositionManager_.commitCandidate(lastContext_, selectedCandidateIndex_);
     } else {
         hr = compositionManager_.commitOriginal(lastContext_);
     }
@@ -1134,12 +1136,16 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(hr, "enter commit selected candidate");
         }
         if (keyCode == VK_TAB) {
+            const bool rawLoanword =
+                compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
             candidateWindow_.hide();
             candidateSelectionActive_ = false;
             conversionActive_ = false;
             selectedCandidateIndex_ = 0;
             stackMode_ = false;
-            const HRESULT hr = compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ');
+            const HRESULT hr = rawLoanword
+                ? compositionManager_.commitOriginalAndInsertLiteral(context, L' ')
+                : compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ');
             compositionManager_.setStackPrefixEnabled(false);
             return recover(hr, "tab accept visible candidate + real space");
         }
@@ -1351,16 +1357,20 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(compositionManager_.insertLiteral(context, digit), "insert Myanmar digit");
         }
 
-        candidateWindow_.hide();
         const bool converted = conversionActive_ || candidateSelectionActive_;
+        const bool rawLoanword = converted
+            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
         compositionManager_.setStackPrefixEnabled(false);
-        const HRESULT hr = converted
-            ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, digit)
-            : compositionManager_.commitBestCandidateAndInsertLiteral(context, digit);
+        const HRESULT hr = rawLoanword
+            ? compositionManager_.commitOriginalAndInsertLiteral(context, digit)
+            : (converted
+                ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, digit)
+                : compositionManager_.commitBestCandidateAndInsertLiteral(context, digit));
         return recover(hr, "commit composition + Myanmar digit");
     }
 
@@ -1378,16 +1388,20 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(compositionManager_.insertLiteral(context, mark), "insert semicolon Myanmar mark");
         }
 
-        candidateWindow_.hide();
         const bool converted = conversionActive_ || candidateSelectionActive_;
+        const bool rawLoanword = converted
+            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
         compositionManager_.setStackPrefixEnabled(false);
-        const HRESULT hr = converted
-            ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, mark)
-            : compositionManager_.commitBestCandidateAndInsertLiteral(context, mark);
+        const HRESULT hr = rawLoanword
+            ? compositionManager_.commitOriginalAndInsertLiteral(context, mark)
+            : (converted
+                ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, mark)
+                : compositionManager_.commitBestCandidateAndInsertLiteral(context, mark));
         return recover(hr, "commit composition + semicolon Myanmar mark");
     }
 
@@ -1484,15 +1498,19 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
                 "insert layout-aware Myanmar punctuation"
             );
         }
-        candidateWindow_.hide();
         const bool converted = conversionActive_ || candidateSelectionActive_;
+        const bool rawLoanword = converted
+            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
-        const HRESULT hr = converted
-            ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, punctuation)
-            : compositionManager_.commitBestCandidateAndInsertLiteral(context, punctuation);
+        const HRESULT hr = rawLoanword
+            ? compositionManager_.commitOriginalAndInsertLiteral(context, punctuation)
+            : (converted
+                ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, punctuation)
+                : compositionManager_.commitBestCandidateAndInsertLiteral(context, punctuation));
         compositionManager_.setStackPrefixEnabled(false);
         return recover(hr, "commit + layout-aware Myanmar punctuation");
     }
@@ -1525,25 +1543,8 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(compositionManager_.previewCandidate(context, 0), "first space convert to candidate #1 without popup");
         }
 
-        // R1.4 loan-word rule:
-        // FIRST Space still previews Myanmar candidate #1.
-        // SECOND Space on an explicitly tagged loan word restores the original
-        // English spelling, commits it, and inserts one real ASCII space.
-        if (compositionManager_.isCurrentLoanword()) {
-            candidateSelectionActive_ = false;
-            conversionActive_ = false;
-            selectedCandidateIndex_ = 0;
-            candidateWindow_.hide();
-            stackMode_ = false;
-            compositionManager_.setStackPrefixEnabled(false);
-
-            return recover(
-                compositionManager_.commitOriginalAndInsertLiteral(context, L' '),
-                "loanword second Space: commit original English + space"
-            );
-        }
-
-        // SECOND Space: open popup and move to #2. If there is only one candidate,
+        // R1.16 SECOND Space: open popup and move from raw loanword #1 to its
+        // first Myanmar transliteration at #2. If there is only one candidate,
         // keep #1 selected in the popup. Further Space presses cycle normally.
         if (!openCandidateWindow()) {
             return S_FALSE;
@@ -1563,15 +1564,19 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         if (!compositionManager_.hasBufferedText()) {
             return S_FALSE;
         }
-        candidateWindow_.hide();
         const bool converted = conversionActive_ || candidateSelectionActive_;
+        const bool rawLoanword = converted
+            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
-        const HRESULT hr = converted
-            ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ')
-            : compositionManager_.commitBestCandidateAndInsertLiteral(context, L' ');
+        const HRESULT hr = rawLoanword
+            ? compositionManager_.commitOriginalAndInsertLiteral(context, L' ')
+            : (converted
+                ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ')
+                : compositionManager_.commitBestCandidateAndInsertLiteral(context, L' '));
         compositionManager_.setStackPrefixEnabled(false);
         return recover(hr, "tab commit composition + real space");
     }

@@ -38,6 +38,7 @@ public:
     // TSF composition can contain earlier manually selected locked segments.
     std::vector<std::wstring> currentCandidateTexts(std::size_t limit = 9) const;
     bool isCurrentLoanword() const noexcept;
+    bool isRawLoanwordCandidate(std::size_t candidateIndex) const noexcept;
 
     HRESULT insertCharacter(ITfContext* context, wchar_t character);
     HRESULT deleteBackspace(ITfContext* context);
@@ -132,6 +133,7 @@ public:
     HRESULT endComposition(TfEditCookie ec);
     HRESULT placeCaretAtCompositionEnd(TfEditCookie ec, ITfContext* context, ITfRange* compositionRange);
     HRESULT applyCandidateIndicator(TfEditCookie ec, ITfContext* context, bool visible);
+    bool needsLeadingRawBoundarySpace(TfEditCookie ec) const;
     void releaseCompositionReference() noexcept;
 
     std::wstring lockedPrefixText() const;
