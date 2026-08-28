@@ -1,0 +1,71 @@
+name: Build friend test package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - CMakeLists.txt
+      - engine/**
+      - ime/**
+      - settings/**
+      - data/**
+      - tests/**
+      - packaging/friend/**
+      - .github/workflows/friend-test-package.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure x64 Release build
+        run: cmake -S . -B build-friend -A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      - name: Build
+        run: cmake --build build-friend --config Release
+
+      - name: Run converter tests
+        run: ctest --test-dir build-friend -C Release --output-on-failure
+
+      - name: Assemble friend package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $package = Join-Path $PWD "friend-package"
+          New-Item -ItemType Directory -Force $package | Out-Null
+
+          Copy-Item "build-friend/Release/MyanglishIME.dll" $package -Force
+
+          $settings = "build-friend/Release/MyanglishSettings.exe"
+          if (Test-Path $settings) {
+            Copy-Item $settings $package -Force
+          }
+
+          $builtData = "build-friend/Release/data"
+          if (Test-Path $builtData) {
+            Copy-Item $builtData (Join-Path $package "data") -Recurse -Force
+          } else {
+            Copy-Item "data" (Join-Path $package "data") -Recurse -Force
+          }
+
+          Copy-Item "packaging/friend/install.cmd" $package -Force
+          Copy-Item "packaging/friend/install.ps1" $package -Force
+          Copy-Item "packaging/friend/uninstall.cmd" $package -Force
+          Copy-Item "packaging/friend/uninstall.ps1" $package -Force
+          Copy-Item "packaging/friend/README_FIRST.txt" $package -Force
+
+      - name: Upload friend package
+        uses: actions/upload-artifact@v4
+        with:
+          name: myanglish-alpha1083r116-friend-test
+          path: friend-package/**
+          if-no-files-found: error
+          retention-days: 30
