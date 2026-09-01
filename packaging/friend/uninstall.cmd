@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title Myanglish IME R1.16 Uninstaller
+title Myanglish IME R1.17 Uninstaller
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0uninstall.ps1"
 set "MYANGLISH_EXIT=%ERRORLEVEL%"
 echo.
