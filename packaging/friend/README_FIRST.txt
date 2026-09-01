@@ -1,9 +1,9 @@
-MYANGLISH IME R1.16 - FRIEND TEST
+MYANGLISH IME R1.17 - FRIEND TEST
 ================================
 
 INSTALL
 1. Extract the ZIP completely.
-2. Double-click install.cmd.
+2. Right-click install.cmd and choose Run as administrator.
 3. When it says installation completed, press Win + Space.
 4. Choose Myanglish IME.
 
@@ -17,6 +17,6 @@ IMPORTANT
 
 မြန်မာလို
 1. ZIP ကို အရင်ဖြည်ပါ။
-2. install.cmd ကို double-click လုပ်ပါ။
+2. install.cmd ကို right-click လုပ်ပြီး Run as administrator ရွေးပါ။
 3. ပြီးသွားရင် Win + Space နှိပ်ပြီး Myanglish IME ကိုရွေးပါ။
 4. ပြန်ဖြုတ်ချင်ရင် uninstall.cmd ကို double-click လုပ်ပါ။

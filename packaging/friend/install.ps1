@@ -12,7 +12,7 @@ try {
         throw "The data folder is missing from the package."
     }
 
-    $installRoot = Join-Path $env:LOCALAPPDATA "MyanglishIME\R1.16"
+    $installRoot = Join-Path $env:LOCALAPPDATA "MyanglishIME\R1.17"
     $installedDll = Join-Path $installRoot "MyanglishIME.dll"
     $installedData = Join-Path $installRoot "data"
     $regsvr32 = Join-Path $env:WINDIR "System32\regsvr32.exe"
@@ -20,7 +20,7 @@ try {
     if (Test-Path -LiteralPath $installedDll) {
         $unregister = Start-Process $regsvr32 -ArgumentList @("/u", "/s", "`"$installedDll`"") -Wait -PassThru
         if ($unregister.ExitCode -ne 0) {
-            Write-Warning "The previous R1.16 registration could not be removed. Continuing with repair install."
+            Write-Warning "The previous R1.17 registration could not be removed. Continuing with repair install."
         }
     }
 
@@ -47,7 +47,7 @@ try {
     }
 
     Write-Host ""
-    Write-Host "Myanglish IME R1.16 installed successfully." -ForegroundColor Green
+    Write-Host "Myanglish IME R1.17 installed successfully." -ForegroundColor Green
     Write-Host "Press Win + Space and choose Myanglish IME."
     Write-Host "Install folder: $installRoot"
     exit 0

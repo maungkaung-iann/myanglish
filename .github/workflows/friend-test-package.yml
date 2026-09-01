@@ -68,7 +68,7 @@ jobs:
       - name: Upload friend package
         uses: actions/upload-artifact@v4
         with:
-          name: myanglish-alpha1083r116-friend-test
+          name: myanglish-alpha1083r117-friend-test
           path: friend-package/**
           if-no-files-found: error
           retention-days: 30

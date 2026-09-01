@@ -1867,7 +1867,7 @@ HRESULT CompositionManager::executeEdit(
             result =
                 previousRange->ShiftStart(
                     editCookie,
-                    -2,
+                    -3,
                     &shifted,
                     nullptr
                 );
@@ -1876,7 +1876,7 @@ HRESULT CompositionManager::executeEdit(
         if (
             FAILED(result)
             || previousRange == nullptr
-            || shifted != -2
+            || (shifted != -2 && shifted != -3)
         ) {
             if (previousRange != nullptr) {
                 previousRange->Release();
@@ -1912,7 +1912,7 @@ HRESULT CompositionManager::executeEdit(
 
         if (
             FAILED(result)
-            || previousLength != 2
+            || previousLength < 2
         ) {
             compositionRange->Release();
 
@@ -1925,35 +1925,81 @@ HRESULT CompositionManager::executeEdit(
                 : S_FALSE;
         }
 
-        const wchar_t previousConsonant =
-            previousText[0];
+        // R1.17 tail decoder:
+        //
+        // Normal:
+        //   C + ASAT
+        //   က် + က -> က္က
+        //
+        // With trailing visarga:
+        //   C + ASAT + VISARGA
+        //   န်း + တ -> န္တ
+        //
+        // Therefore:
+        //   မန်း + တ + Ctrl+Enter -> မန္တ
+        //
+        // Only the trailing VISARGA (း) belonging to this stack boundary is
+        // dropped. Other text and all other IME behavior stay unchanged.
+        const std::wstring previousTail(
+            previousText,
+            previousLength
+        );
 
-        const wchar_t previousMark =
-            previousText[1];
+        wchar_t previousConsonant = 0;
+        LONG replaceCount = 0;
 
-        const bool previousIsConsonant =
-            previousConsonant
-                >= static_cast<wchar_t>(0x1000)
-            && previousConsonant
-                <= static_cast<wchar_t>(0x1021);
+        if (
+            previousTail.size() >= 3
+            && previousTail[previousTail.size() - 1]
+                == static_cast<wchar_t>(0x1038) // း
+            && previousTail[previousTail.size() - 2]
+                == static_cast<wchar_t>(0x103A) // ်
+        ) {
+            const wchar_t possibleConsonant =
+                previousTail[previousTail.size() - 3];
 
-        const bool previousIsAsat =
-            previousMark
-                == static_cast<wchar_t>(0x103A);
+            const bool isMyanmarConsonant =
+                possibleConsonant
+                    >= static_cast<wchar_t>(0x1000)
+                && possibleConsonant
+                    <= static_cast<wchar_t>(0x1021);
 
-        // င + ် is special in Myanglish.
-        // Never let the normal stack fallback transform it as င္...
-        // CommitKinziShortcut owns:
-        //   င်  -> င်္
-        //   မင်း + ဂ -> မင်္ဂ
+            if (isMyanmarConsonant) {
+                previousConsonant = possibleConsonant;
+                replaceCount = 3;
+            }
+        }
+
+        if (
+            replaceCount == 0
+            && previousTail.size() >= 2
+            && previousTail[previousTail.size() - 1]
+                == static_cast<wchar_t>(0x103A) // ်
+        ) {
+            const wchar_t possibleConsonant =
+                previousTail[previousTail.size() - 2];
+
+            const bool isMyanmarConsonant =
+                possibleConsonant
+                    >= static_cast<wchar_t>(0x1000)
+                && possibleConsonant
+                    <= static_cast<wchar_t>(0x1021);
+
+            if (isMyanmarConsonant) {
+                previousConsonant = possibleConsonant;
+                replaceCount = 2;
+            }
+        }
+
+        // င + ် / င + ် + း stays owned by the existing special
+        // CommitKinziShortcut path. Do not change that stable behavior.
         const bool isSpecialNgaAsat =
             previousConsonant
                 == static_cast<wchar_t>(0x1004)
-            && previousIsAsat;
+            && replaceCount != 0;
 
         if (
-            !previousIsConsonant
-            || !previousIsAsat
+            replaceCount == 0
             || isSpecialNgaAsat
         ) {
             compositionRange->Release();
@@ -1965,8 +2011,8 @@ HRESULT CompositionManager::executeEdit(
             return S_FALSE;
         }
 
-        // Cover the previous C+ASAT and the current raw composition with one
-        // replacement range.
+        // Cover the previous C+ASAT(+optional VISARGA) and the current raw
+        // composition with one replacement range.
         ITfRange* replaceRange = nullptr;
 
         result =
@@ -1986,7 +2032,7 @@ HRESULT CompositionManager::executeEdit(
             result =
                 replaceRange->ShiftStart(
                     editCookie,
-                    -2,
+                    -replaceCount,
                     &replaceShift,
                     nullptr
                 );
@@ -1995,7 +2041,7 @@ HRESULT CompositionManager::executeEdit(
         if (
             FAILED(result)
             || replaceRange == nullptr
-            || replaceShift != -2
+            || replaceShift != -replaceCount
         ) {
             if (replaceRange != nullptr) {
                 replaceRange->Release();
