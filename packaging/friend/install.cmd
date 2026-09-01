@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title Myanglish IME R1.16 Installer
+title Myanglish IME R1.17 Installer
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
 set "MYANGLISH_EXIT=%ERRORLEVEL%"
 echo.
