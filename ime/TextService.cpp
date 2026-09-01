@@ -136,10 +136,14 @@ private:
 
 
 bool isModeToggle(WPARAM keyCode) {
-    return keyCode == VK_SPACE
-        && (GetKeyState(VK_SHIFT) < 0)
+    // Plain CapsLock toggles Myanglish/English mode. Shift+CapsLock is left
+    // untouched so Windows can use it as the real capital-letter lock.
+    return keyCode == VK_CAPITAL
+        && (GetKeyState(VK_SHIFT) >= 0)
         && (GetKeyState(VK_CONTROL) >= 0)
-        && (GetKeyState(VK_MENU) >= 0);
+        && (GetKeyState(VK_MENU) >= 0)
+        && (GetKeyState(VK_LWIN) >= 0)
+        && (GetKeyState(VK_RWIN) >= 0);
 }
 
 bool translatedCharacterForKey(WPARAM keyCode, wchar_t& character) {
@@ -1084,8 +1088,9 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         return S_FALSE;
     }
 
-    // Shift+Space = persistent Myanglish <-> English. If a raw word is being
-    // typed, keep it exactly as typed before leaving Myanglish mode.
+    // Plain CapsLock = persistent Myanglish <-> English. Shift+CapsLock is
+    // passed through as the normal Windows capital-letter lock command. If a
+    // raw word is being typed, keep it exactly as typed before leaving Myanglish.
     if (isModeToggle(keyCode)) {
         candidateSelectionActive_ = false;
         conversionActive_ = false;
