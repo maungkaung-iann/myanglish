@@ -136,10 +136,14 @@ private:
 
 
 bool isModeToggle(WPARAM keyCode) {
-    return keyCode == VK_SPACE
-        && (GetKeyState(VK_SHIFT) < 0)
+    // Plain CapsLock toggles Myanglish/English mode. Shift+CapsLock is left
+    // untouched so Windows can use it as the real capital-letter lock.
+    return keyCode == VK_CAPITAL
+        && (GetKeyState(VK_SHIFT) >= 0)
         && (GetKeyState(VK_CONTROL) >= 0)
-        && (GetKeyState(VK_MENU) >= 0);
+        && (GetKeyState(VK_MENU) >= 0)
+        && (GetKeyState(VK_LWIN) >= 0)
+        && (GetKeyState(VK_RWIN) >= 0);
 }
 
 bool translatedCharacterForKey(WPARAM keyCode, wchar_t& character) {
@@ -248,7 +252,6 @@ bool isR111CustomSymbol(wchar_t c) {
     return c == L',' || c == L'.' || c == L':' || c == L';'
         || c == L'"' || c == L'\\' || c == L'|' || c == L'*';
 }
-
 bool isR111PassThroughSymbol(WPARAM keyCode) {
     wchar_t c = 0;
     if (!translatedCharacterForKey(keyCode, c) || isR111CustomSymbol(c)) {
@@ -497,8 +500,7 @@ HRESULT TextService::activateInternal(ITfThreadMgr* threadMgr, TfClientId client
 
     hr = keystrokeMgr_->AdviseKeyEventSink(clientId_, keyEventSink_, TRUE);
     if (FAILED(hr)) {
-        debugLogHr("AdviseKeyEventSink", hr);
-        keyEventSink_->Release();
+        debugLogHr("AdviseKeyEventSink", hr);        keyEventSink_->Release();
         keyEventSink_ = nullptr;
         keystrokeMgr_->Release();
         keystrokeMgr_ = nullptr;
@@ -747,8 +749,7 @@ HRESULT TextService::toggleModeFromLanguageBar() noexcept {
 
     // If a composition is active, accept what the user currently sees before
     // changing the mode. This keeps taskbar clicks from leaving stale TSF state.
-    if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
-        (void)commitVisibleOnFocusLoss();
+    if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {        (void)commitVisibleOnFocusLoss();
     }
 
     candidateSelectionActive_ = false;
@@ -997,8 +998,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     // Alpha 0.10.1: Ctrl+Enter stacks the best current syllable onto the
     // immediately preceding Burmese consonant and commits the result.
     if (latchedStackShortcut || isStackCommitShortcut(keyCode)) {
-        if (!enabled_ || !compositionManager_.hasBufferedText()) {
-            return S_FALSE;
+        if (!enabled_ || !compositionManager_.hasBufferedText()) {            return S_FALSE;
         }
         const std::size_t stackCandidateIndex = selectedCandidateIndex_;
         candidateWindow_.hide();
@@ -1084,8 +1084,9 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         return S_FALSE;
     }
 
-    // Shift+Space = persistent Myanglish <-> English. If a raw word is being
-    // typed, keep it exactly as typed before leaving Myanglish mode.
+    // Plain CapsLock = persistent Myanglish <-> English. Shift+CapsLock is
+    // passed through as the normal Windows capital-letter lock command. If a
+    // raw word is being typed, keep it exactly as typed before leaving Myanglish.
     if (isModeToggle(keyCode)) {
         candidateSelectionActive_ = false;
         conversionActive_ = false;
@@ -1247,8 +1248,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         // Lexicon Pack 2: Shift+T at the START of a fresh word is the
         // case-sensitive T shortcut, not a stack request. Shift+letters while
         // a word/candidate is already active keep the existing stack behavior.
-        if (
-            shiftHeldForLetter &&
+        if (            shiftHeldForLetter &&
             keyCode == 'T' &&
             !conversionActive_ &&
             !candidateSelectionActive_ &&
@@ -1497,8 +1497,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
                 compositionManager_.insertLiteral(context, punctuation),
                 "insert layout-aware Myanmar punctuation"
             );
-        }
-        const bool converted = conversionActive_ || candidateSelectionActive_;
+        }        const bool converted = conversionActive_ || candidateSelectionActive_;
         const bool rawLoanword = converted
             && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
         candidateWindow_.hide();
