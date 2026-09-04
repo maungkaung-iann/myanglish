@@ -1,0 +1,10 @@
+^C:\PROJECTS\MYANGLISH\BUILD-R1.15-CAPSLOCKMODE-TEST\CMAKEFILES\7B3505E8200DC744B8385355172199E0\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Projects/myanglish -BC:/Projects/myanglish/build-R1.15-CapsLockMode-Test --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/MyanglishIME.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

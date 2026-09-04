@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-R1.14-CapsLock-Normal-Restore-Test/CMakeFiles/ZERO_CHECK.dir

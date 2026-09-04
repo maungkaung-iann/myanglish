@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-vscode/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-vscode/CMakeFiles/ZERO_CHECK.dir

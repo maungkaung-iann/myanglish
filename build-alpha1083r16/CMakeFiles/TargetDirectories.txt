@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-alpha1083r16/CMakeFiles/ZERO_CHECK.dir

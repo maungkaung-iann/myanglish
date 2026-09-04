@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-alpha1083r14a-all-loanwords/CMakeFiles/ZERO_CHECK.dir

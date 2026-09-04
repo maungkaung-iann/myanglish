@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-alpha1083r15-romaji-popup/CMakeFiles/ZERO_CHECK.dir

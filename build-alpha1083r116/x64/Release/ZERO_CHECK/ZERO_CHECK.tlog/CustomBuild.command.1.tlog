@@ -1,0 +1,10 @@
+^C:\PROJECTS\MYANGLISH\BUILD-ALPHA1083R116\CMAKEFILES\F74D7954BF256B885EF3259A4BF3232D\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Projects/myanglish -BC:/Projects/myanglish/build-alpha1083r116 --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Projects/myanglish/build-alpha1083r116/MyanglishIME.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

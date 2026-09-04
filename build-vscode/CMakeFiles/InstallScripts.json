@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Projects/myanglish/build-vscode/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

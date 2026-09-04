@@ -1,0 +1,10 @@
+^C:\PROJECTS\MYANGLISH\BUILD-ALPHA1083R15-ROMAJI-POPUP\CMAKEFILES\D11D75A66F482156BE01956A9066EFA4\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Projects/myanglish -BC:/Projects/myanglish/build-alpha1083r15-romaji-popup --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Projects/myanglish/build-alpha1083r15-romaji-popup/MyanglishIME.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

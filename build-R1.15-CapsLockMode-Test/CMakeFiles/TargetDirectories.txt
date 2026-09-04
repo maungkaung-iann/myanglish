@@ -1,0 +1,7 @@
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/MyanglishEngine.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/MyanglishIME.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/MyanglishSettings.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/MyanglishTests.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/RUN_TESTS.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/ALL_BUILD.dir
+C:/Projects/myanglish/build-R1.15-CapsLockMode-Test/CMakeFiles/ZERO_CHECK.dir
