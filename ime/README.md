@@ -9,7 +9,7 @@ Goals for this milestone:
 - keep an internal UTF-8 Latin composition buffer
 - convert with the existing Myanglish engine on Space
 - commit the highest-ranked Burmese candidate
-- support Backspace, Enter, Escape, and Shift+Space mode toggle
+- support Backspace, Enter, Escape, and CapsLock mode toggle
 
 ## Development data location
 
