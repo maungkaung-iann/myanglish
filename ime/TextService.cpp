@@ -7,8 +7,13 @@ namespace myanglish::ime {
 
 namespace {
 
-bool isSpaceToggle(WPARAM keyCode) {
-    return keyCode == VK_SPACE && (GetKeyState(VK_SHIFT) < 0);
+bool isCapsLockModeToggle(WPARAM keyCode) {
+    // Only a plain CapsLock changes IME mode. Shift+CapsLock remains the
+    // normal Windows Capital Lock key and continues to control its LED.
+    return keyCode == VK_CAPITAL
+        && (GetKeyState(VK_SHIFT) >= 0)
+        && (GetKeyState(VK_CONTROL) >= 0)
+        && (GetKeyState(VK_MENU) >= 0);
 }
 
 } // namespace
@@ -181,10 +186,10 @@ wchar_t TextService::toLowerAsciiKey(WPARAM keyCode) noexcept {
 
 bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcept {
     if (!enabled_) {
-        return isSpaceToggle(keyCode);
+        return isCapsLockModeToggle(keyCode);
     }
 
-    if (isSpaceToggle(keyCode)) {
+    if (isCapsLockModeToggle(keyCode)) {
         return true;
     }
 
@@ -201,7 +206,7 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
 
 HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (!enabled_) {
-        if (isSpaceToggle(keyCode)) {
+        if (isCapsLockModeToggle(keyCode)) {
             enabled_ = true;
             debugLog("Switched to Myanglish mode");
             return S_OK;
@@ -210,7 +215,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         return S_FALSE;
     }
 
-    if (isSpaceToggle(keyCode)) {
+    if (isCapsLockModeToggle(keyCode)) {
         if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
             const HRESULT commitHr = compositionManager_.commitOriginal(context);
             if (FAILED(commitHr)) {
