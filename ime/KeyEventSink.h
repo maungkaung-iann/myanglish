@@ -31,6 +31,7 @@ public:
 private:
     TextService& service_;
     std::atomic<ULONG> refCount_{1};
+    bool suppressCapsLockKeyUp_ = false;
 };
 
 } // namespace myanglish::ime
