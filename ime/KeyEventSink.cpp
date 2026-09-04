@@ -50,15 +50,18 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyDown(ITfContext* pic, WPARAM wP
     }
 
     *pfEaten = service_.shouldHandleKeyDown(pic, wParam) ? TRUE : FALSE;
+    if (wParam == VK_CAPITAL && *pfEaten) {
+        suppressCapsLockKeyUp_ = true;
+    }
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) {
         return E_POINTER;
     }
 
-    *pfEaten = FALSE;
+    *pfEaten = (wParam == VK_CAPITAL && suppressCapsLockKeyUp_) ? TRUE : FALSE;
     return S_OK;
 }
 
@@ -70,6 +73,9 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
     const HRESULT hr = service_.processKeyDown(pic, wParam);
     if (hr == S_OK) {
         *pfEaten = TRUE;
+        if (wParam == VK_CAPITAL) {
+            suppressCapsLockKeyUp_ = true;
+        }
         return S_OK;
     }
 
@@ -82,9 +88,15 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
     return hr;
 }
 
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) {
         return E_POINTER;
+    }
+
+    if (wParam == VK_CAPITAL && suppressCapsLockKeyUp_) {
+        suppressCapsLockKeyUp_ = false;
+        *pfEaten = TRUE;
+        return S_OK;
     }
 
     *pfEaten = FALSE;
