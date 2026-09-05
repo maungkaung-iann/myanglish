@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:com4="http://schemas.microsoft.com/appx/manifest/com/windows10/4"
+  xmlns:desktop7="http://schemas.microsoft.com/appx/manifest/desktop/windows10/7"
+  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+  IgnorableNamespaces="uap rescap com4 desktop7 uap4">
+
+  <Identity
+    Name="MAUNGKAUNG.Myanglish"
+    Publisher="CN=C848390B-B23A-4ACF-B5CB-E9841EB370BF"
+    Version="1.0.1.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Myanglish</DisplayName>
+    <PublisherDisplayName>MAUNG KAUNG</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Desktop"
+      MinVersion="10.0.22000.0"
+      MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Applications>
+    <Application
+      Id="Myanglish"
+      Executable="MyanglishSettings.exe"
+      EntryPoint="Windows.FullTrustApplication">
+
+      <uap:VisualElements
+        DisplayName="Myanglish"
+        Description="Romanized Myanglish to Myanmar Unicode input method"
+        BackgroundColor="transparent"
+        Square44x44Logo="Assets\Square44x44Logo.png"
+        Square150x150Logo="Assets\Square150x150Logo.png" />
+
+      <Extensions>
+        <!--
+          The TSF DLL is an in-process COM server. CompatMode=classic makes
+          the COM registration visible through the classic COM registration
+          model that TSF/ctfmon uses outside the packaged app process.
+        -->
+        <com4:Extension
+          Category="windows.comServer"
+          desktop7:CompatMode="classic"
+          desktop7:Scope="user">
+          <com4:ComServer>
+            <com4:InProcessServer Path="MyanglishIME.dll">
+              <com4:Class
+                Id="5F8C4D13-9E7E-4E5B-8C38-123159872A10"
+                DisplayName="Myanglish IME"
+                ThreadingModel="STA"
+                Virtualization="disabled" />
+            </com4:InProcessServer>
+          </com4:ComServer>
+        </com4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <uap4:CustomCapability Name="Microsoft.classicAppCompat_8wekyb3d8bbwe" />
+  </Capabilities>
+</Package>
