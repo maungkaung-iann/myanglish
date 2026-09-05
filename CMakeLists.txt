@@ -1,8 +1,8 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 
 project(
     MyanglishIME
-    VERSION 0.10.8.3
+    VERSION 1.0.1.0
     LANGUAGES CXX
 )
 
@@ -138,11 +138,19 @@ endif()
 if(WIN32)
     add_executable(MyanglishSettings WIN32
         settings/SettingsMain.cpp
+        settings/PackagedTsfBootstrap.cpp
+        ime/Guids.cpp
+    )
+
+    target_include_directories(MyanglishSettings
+        PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/settings"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ime"
     )
 
     target_compile_features(MyanglishSettings PRIVATE cxx_std_17)
     target_compile_definitions(MyanglishSettings PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_link_libraries(MyanglishSettings PRIVATE user32)
+    target_link_libraries(MyanglishSettings PRIVATE user32 ole32 uuid)
 
     if(MSVC)
         target_compile_options(MyanglishSettings PRIVATE /utf-8)
