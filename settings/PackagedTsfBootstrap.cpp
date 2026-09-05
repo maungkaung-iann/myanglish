@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <sstream>
 #include <string>
 
@@ -93,8 +94,9 @@ HRESULT registerProfile() {
 
     const std::wstring iconPath = currentModulePath();
 
-    // No substitute HKL is used. Myanglish is a TSF text service, not a US
-    // keyboard layout. InstallLayoutOrTip below enables it for this user.
+    // Do not substitute the US keyboard layout. Myanglish is a TSF text
+    // service, and InstallLayoutOrTip below adds the profile to this user's
+    // enabled input methods.
     hr = profileManager->RegisterProfile(
         myanglish::ime::CLSID_MyanglishIME,
         kMyanglishLangId,
@@ -180,7 +182,7 @@ HRESULT installLayoutOrTip() {
         return hr;
     }
 
-    // Microsoft TSF profile string format:
+    // TSF text-service profile string:
     // <LangID>:{CLSID of TIP}{GUID of language profile}
     constexpr wchar_t profile[] =
         L"0x0455:"
@@ -201,8 +203,6 @@ HRESULT installLayoutOrTip() {
 } // namespace
 
 PackagedTsfBootstrapResult ensurePackagedTsfRegistration() {
-    PackagedTsfBootstrapResult result{};
-
     bool shouldUninitialize = false;
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (SUCCEEDED(hr)) {
@@ -243,5 +243,35 @@ PackagedTsfBootstrapResult ensurePackagedTsfRegistration() {
 
     return {S_OK, L"ready"};
 }
+
+namespace {
+
+struct PackagedTsfAutoBootstrap {
+    PackagedTsfAutoBootstrap() {
+        const PackagedTsfBootstrapResult result = ensurePackagedTsfRegistration();
+        if (SUCCEEDED(result.hr)) {
+            return;
+        }
+
+        std::wostringstream message;
+        message << L"Myanglish could not enable its TSF profile.\n\n"
+                << L"Step: " << result.step << L"\n"
+                << L"HRESULT: 0x"
+                << std::uppercase << std::hex << std::setw(8) << std::setfill(L'0')
+                << static_cast<unsigned long>(result.hr)
+                << L"\n\nLog: %LOCALAPPDATA%\\MyanglishIME\\store-tsf-bootstrap.log";
+
+        MessageBoxW(
+            nullptr,
+            message.str().c_str(),
+            L"Myanglish Store TSF Test",
+            MB_OK | MB_ICONERROR
+        );
+    }
+};
+
+PackagedTsfAutoBootstrap g_packagedTsfAutoBootstrap;
+
+} // namespace
 
 } // namespace myanglish::settings
