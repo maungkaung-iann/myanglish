@@ -4,14 +4,12 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:com4="http://schemas.microsoft.com/appx/manifest/com/windows10/4"
-  xmlns:desktop7="http://schemas.microsoft.com/appx/manifest/desktop/windows10/7"
-  xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
-  IgnorableNamespaces="uap rescap com4 desktop7 uap4">
+  IgnorableNamespaces="uap rescap com4">
 
   <Identity
     Name="MAUNGKAUNG.Myanglish"
     Publisher="CN=C848390B-B23A-4ACF-B5CB-E9841EB370BF"
-    Version="1.0.1.0"
+    Version="1.0.2.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
@@ -46,14 +44,12 @@
 
       <Extensions>
         <!--
-          The TSF DLL is an in-process COM server. CompatMode=classic makes
-          the COM registration visible through the classic COM registration
-          model that TSF/ctfmon uses outside the packaged app process.
+          v1.0.2 install-fix experiment:
+          use normal packaged COM registration (modern/user-scoped defaults).
+          Do not request classicAppCompat here; v1.0.1 failed Store installation
+          before functional testing with 0x80073CF6.
         -->
-        <com4:Extension
-          Category="windows.comServer"
-          desktop7:CompatMode="classic"
-          desktop7:Scope="user">
+        <com4:Extension Category="windows.comServer">
           <com4:ComServer>
             <com4:InProcessServer Path="MyanglishIME.dll">
               <com4:Class
@@ -70,6 +66,5 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <uap4:CustomCapability Name="Microsoft.classicAppCompat_8wekyb3d8bbwe" />
   </Capabilities>
 </Package>
