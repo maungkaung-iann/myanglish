@@ -1,6 +1,8 @@
 #include <Windows.h>
+#include <Shellapi.h>
 
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 namespace {
@@ -18,11 +20,47 @@ std::filesystem::path moduleDirectory() {
     return std::filesystem::path(std::wstring(path, len)).parent_path();
 }
 
+std::filesystem::path setupLogPath() {
+    wchar_t path[32768]{};
+    const DWORD len = GetEnvironmentVariableW(
+        L"LOCALAPPDATA",
+        path,
+        static_cast<DWORD>(std::size(path))
+    );
+
+    std::filesystem::path root;
+    if (len > 0 && len < std::size(path)) {
+        root = std::filesystem::path(path) / L"MyanglishIME";
+    } else {
+        root = moduleDirectory();
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(root, ec);
+    return root / L"setup.log";
+}
+
+void logSetupAction(const char* action, HRESULT hr) {
+    try {
+        std::ofstream file(setupLogPath(), std::ios::app);
+        if (!file.is_open()) {
+            return;
+        }
+        file << action << " hr=0x"
+             << std::hex << std::uppercase
+             << static_cast<unsigned long>(hr)
+             << "\n";
+    } catch (...) {
+    }
+}
+
 HRESULT callRegistrationExport(bool uninstall) {
     const auto dllPath = moduleDirectory() / L"MyanglishIME.dll";
     HMODULE module = LoadLibraryW(dllPath.c_str());
     if (module == nullptr) {
-        return HRESULT_FROM_WIN32(GetLastError());
+        const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        logSetupAction(uninstall ? "Uninstall.LoadLibrary" : "Install.LoadLibrary", hr);
+        return hr;
     }
 
     using RegisterFn = HRESULT (STDAPICALLTYPE*)(void);
@@ -31,11 +69,13 @@ HRESULT callRegistrationExport(bool uninstall) {
     if (fn == nullptr) {
         const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
         FreeLibrary(module);
+        logSetupAction(uninstall ? "Uninstall.GetProcAddress" : "Install.GetProcAddress", hr);
         return hr;
     }
 
     const HRESULT hr = fn();
     FreeLibrary(module);
+    logSetupAction(uninstall ? "Uninstall" : "Install", hr);
 
     if (SUCCEEDED(hr)) {
         wchar_t ctfmonPath[MAX_PATH]{};
@@ -101,9 +141,9 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
 
         CreateWindowW(
             L"BUTTON",
-            L"Uninstall",
+            L"Remove Myanglish",
             WS_CHILD | WS_VISIBLE,
-            238, 110, 120, 42,
+            238, 110, 150, 42,
             window,
             reinterpret_cast<HMENU>(static_cast<INT_PTR>(kUninstallButtonId)),
             nullptr, nullptr
@@ -119,12 +159,27 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
 
     case WM_COMMAND:
+        if (HIWORD(wParam) != BN_CLICKED) {
+            break;
+        }
+
         if (LOWORD(wParam) == kInstallButtonId) {
             const HRESULT hr = callRegistrationExport(false);
             showResult(window, false, hr);
             return 0;
         }
+
         if (LOWORD(wParam) == kUninstallButtonId) {
+            const int answer = MessageBoxW(
+                window,
+                L"Remove Myanglish from Windows?",
+                L"Myanglish Setup",
+                MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2
+            );
+            if (answer != IDYES) {
+                return 0;
+            }
+
             const HRESULT hr = callRegistrationExport(true);
             showResult(window, true, hr);
             return 0;
@@ -155,7 +210,7 @@ int runInteractive(HINSTANCE instance, int showCommand) {
         L"Myanglish Setup",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        520, 260,
+        540, 270,
         nullptr, nullptr, instance, nullptr
     );
 
