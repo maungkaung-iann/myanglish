@@ -3,13 +3,12 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:com4="http://schemas.microsoft.com/appx/manifest/com/windows10/4"
-  IgnorableNamespaces="uap rescap com4">
+  IgnorableNamespaces="uap rescap">
 
   <Identity
     Name="MAUNGKAUNG.Myanglish"
     Publisher="CN=C848390B-B23A-4ACF-B5CB-E9841EB370BF"
-    Version="1.0.2.0"
+    Version="1.0.3.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
@@ -32,39 +31,20 @@
   <Applications>
     <Application
       Id="Myanglish"
-      Executable="MyanglishSettings.exe"
+      Executable="MyanglishStoreLauncher.exe"
       EntryPoint="Windows.FullTrustApplication">
 
       <uap:VisualElements
         DisplayName="Myanglish"
-        Description="Romanized Myanglish to Myanmar Unicode input method"
+        Description="Download and install the Myanglish Myanmar input method"
         BackgroundColor="transparent"
         Square44x44Logo="Assets\Square44x44Logo.png"
         Square150x150Logo="Assets\Square150x150Logo.png" />
-
-      <Extensions>
-        <!--
-          v1.0.2 install-fix experiment:
-          use normal packaged COM registration (modern/user-scoped defaults).
-          Do not request classicAppCompat here; v1.0.1 failed Store installation
-          before functional testing with 0x80073CF6.
-        -->
-        <com4:Extension Category="windows.comServer">
-          <com4:ComServer>
-            <com4:InProcessServer Path="MyanglishIME.dll">
-              <com4:Class
-                Id="5F8C4D13-9E7E-4E5B-8C38-123159872A10"
-                DisplayName="Myanglish IME"
-                ThreadingModel="STA"
-                Virtualization="disabled" />
-            </com4:InProcessServer>
-          </com4:ComServer>
-        </com4:Extension>
-      </Extensions>
     </Application>
   </Applications>
 
   <Capabilities>
+    <Capability Name="internetClient" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>
