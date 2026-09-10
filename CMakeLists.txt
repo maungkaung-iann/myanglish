@@ -181,6 +181,29 @@ if(WIN32)
 endif()
 
 ###########################################################
+# Microsoft Store launcher (Windows)
+###########################################################
+
+if(WIN32)
+    add_executable(MyanglishStoreLauncher WIN32
+        store_launcher/LauncherMain.cpp
+    )
+
+    target_compile_features(MyanglishStoreLauncher PRIVATE cxx_std_17)
+    target_compile_definitions(MyanglishStoreLauncher PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_link_libraries(MyanglishStoreLauncher PRIVATE user32 shell32 urlmon)
+
+    if(MSVC)
+        target_compile_options(MyanglishStoreLauncher PRIVATE /utf-8)
+        target_link_options(
+            MyanglishStoreLauncher
+            PRIVATE
+                "/MANIFESTUAC:level='asInvoker' uiAccess='false'"
+        )
+    endif()
+endif()
+
+###########################################################
 # Prototype
 ###########################################################
 
