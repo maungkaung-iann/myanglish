@@ -10,6 +10,7 @@ namespace {
 constexpr wchar_t kWindowClass[] = L"MyanglishSetupWindow";
 constexpr int kInstallButtonId = 1001;
 constexpr int kUninstallButtonId = 1002;
+constexpr wchar_t kProductDirectory[] = L"Myanglish";
 
 std::filesystem::path moduleDirectory() {
     wchar_t path[32768]{};
@@ -18,6 +19,21 @@ std::filesystem::path moduleDirectory() {
         return {};
     }
     return std::filesystem::path(std::wstring(path, len)).parent_path();
+}
+
+std::filesystem::path installDirectory() {
+    wchar_t path[32768]{};
+    const DWORD len = GetEnvironmentVariableW(
+        L"ProgramFiles",
+        path,
+        static_cast<DWORD>(std::size(path))
+    );
+
+    if (len == 0 || len >= std::size(path)) {
+        return {};
+    }
+
+    return std::filesystem::path(std::wstring(path, len)) / kProductDirectory;
 }
 
 std::filesystem::path setupLogPath() {
@@ -54,8 +70,61 @@ void logSetupAction(const char* action, HRESULT hr) {
     }
 }
 
-HRESULT callRegistrationExport(bool uninstall) {
-    const auto dllPath = moduleDirectory() / L"MyanglishIME.dll";
+HRESULT copyPayloadToInstallDirectory() {
+    const auto source = moduleDirectory();
+    const auto destination = installDirectory();
+
+    if (source.empty() || destination.empty()) {
+        return E_FAIL;
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(destination, ec);
+    if (ec) {
+        return HRESULT_FROM_WIN32(ec.value());
+    }
+
+    // Copy the complete installer payload so the registered TSF DLL no longer
+    // depends on the Store launcher's download/cache directory.
+    for (const auto& entry : std::filesystem::directory_iterator(source, ec)) {
+        if (ec) {
+            return HRESULT_FROM_WIN32(ec.value());
+        }
+
+        const auto target = destination / entry.path().filename();
+        ec.clear();
+
+        if (entry.is_directory()) {
+            std::filesystem::copy(
+                entry.path(),
+                target,
+                std::filesystem::copy_options::recursive |
+                    std::filesystem::copy_options::overwrite_existing,
+                ec
+            );
+        } else if (entry.is_regular_file()) {
+            std::filesystem::copy_file(
+                entry.path(),
+                target,
+                std::filesystem::copy_options::overwrite_existing,
+                ec
+            );
+        }
+
+        if (ec) {
+            return HRESULT_FROM_WIN32(ec.value());
+        }
+    }
+
+    const auto dllPath = destination / L"MyanglishIME.dll";
+    if (!std::filesystem::exists(dllPath, ec) || ec) {
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    }
+
+    return S_OK;
+}
+
+HRESULT callRegistrationExportForDll(const std::filesystem::path& dllPath, bool uninstall) {
     HMODULE module = LoadLibraryW(dllPath.c_str());
     if (module == nullptr) {
         const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
@@ -76,8 +145,7 @@ HRESULT callRegistrationExport(bool uninstall) {
     const HRESULT hr = fn();
 
     // Keep the IME module loaded until Setup exits. This matches the installer
-    // configuration that passed the elevated TSF registration test and avoids
-    // changing module lifetime immediately after registration.
+    // configuration that passed the elevated TSF registration test.
     // Windows releases the module automatically when the Setup process exits.
     logSetupAction(uninstall ? "Uninstall" : "Install", hr);
 
@@ -91,6 +159,54 @@ HRESULT callRegistrationExport(bool uninstall) {
     return hr;
 }
 
+HRESULT installMyanglish() {
+    HRESULT hr = copyPayloadToInstallDirectory();
+    logSetupAction("Install.CopyPayload", hr);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    const auto dllPath = installDirectory() / L"MyanglishIME.dll";
+    return callRegistrationExportForDll(dllPath, false);
+}
+
+HRESULT uninstallMyanglish() {
+    const auto permanentDll = installDirectory() / L"MyanglishIME.dll";
+    const auto fallbackDll = moduleDirectory() / L"MyanglishIME.dll";
+
+    std::error_code ec;
+    const auto dllPath = std::filesystem::exists(permanentDll, ec) && !ec
+        ? permanentDll
+        : fallbackDll;
+
+    HRESULT hr = callRegistrationExportForDll(dllPath, true);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // The Store launcher currently starts Setup from its downloaded payload,
+    // so the permanent directory is normally not the running executable's
+    // directory and can be removed immediately after unregistering.
+    const auto destination = installDirectory();
+    if (!destination.empty()) {
+        ec.clear();
+        std::filesystem::remove_all(destination, ec);
+        if (ec) {
+            logSetupAction("Uninstall.RemoveInstallDirectory", HRESULT_FROM_WIN32(ec.value()));
+            // Registration already succeeded. Do not report uninstall failure
+            // solely because a file is temporarily locked.
+        } else {
+            logSetupAction("Uninstall.RemoveInstallDirectory", S_OK);
+        }
+    }
+
+    return hr;
+}
+
+HRESULT performSetupAction(bool uninstall) {
+    return uninstall ? uninstallMyanglish() : installMyanglish();
+}
+
 void showResult(HWND owner, bool uninstall, HRESULT hr) {
     wchar_t message[512]{};
     if (SUCCEEDED(hr)) {
@@ -98,7 +214,7 @@ void showResult(HWND owner, bool uninstall, HRESULT hr) {
             message,
             uninstall
                 ? L"Myanglish was uninstalled successfully.\n\nHRESULT: 0x%08lX"
-                : L"Myanglish was installed successfully.\n\nUse Win + Space to select Myanglish.\nHRESULT: 0x%08lX",
+                : L"Myanglish was installed successfully.\n\nInstalled to C:\\Program Files\\Myanglish\nUse Win + Space to select Myanglish.\nHRESULT: 0x%08lX",
             static_cast<unsigned long>(hr)
         );
         MessageBoxW(owner, message, L"Myanglish Setup", MB_OK | MB_ICONINFORMATION);
@@ -168,7 +284,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         }
 
         if (LOWORD(wParam) == kInstallButtonId) {
-            const HRESULT hr = callRegistrationExport(false);
+            const HRESULT hr = performSetupAction(false);
             showResult(window, false, hr);
             return 0;
         }
@@ -184,7 +300,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
                 return 0;
             }
 
-            const HRESULT hr = callRegistrationExport(true);
+            const HRESULT hr = performSetupAction(true);
             showResult(window, true, hr);
             return 0;
         }
@@ -241,7 +357,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR commandLine, int showCo
 
     if (args.find(L"/silent") != std::wstring::npos) {
         const bool uninstall = args.find(L"/uninstall") != std::wstring::npos;
-        const HRESULT hr = callRegistrationExport(uninstall);
+        const HRESULT hr = performSetupAction(uninstall);
         return FAILED(hr) ? 1 : 0;
     }
 
