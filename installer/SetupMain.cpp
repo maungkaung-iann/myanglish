@@ -74,7 +74,11 @@ HRESULT callRegistrationExport(bool uninstall) {
     }
 
     const HRESULT hr = fn();
-    FreeLibrary(module);
+
+    // Keep the IME module loaded until Setup exits. This matches the installer
+    // configuration that passed the elevated TSF registration test and avoids
+    // changing module lifetime immediately after registration.
+    // Windows releases the module automatically when the Setup process exits.
     logSetupAction(uninstall ? "Uninstall" : "Install", hr);
 
     if (SUCCEEDED(hr)) {
