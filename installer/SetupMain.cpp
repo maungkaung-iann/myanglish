@@ -84,8 +84,6 @@ HRESULT copyPayloadToInstallDirectory() {
         return HRESULT_FROM_WIN32(ec.value());
     }
 
-    // Copy the complete installer payload so the registered TSF DLL no longer
-    // depends on the Store launcher's download/cache directory.
     for (const auto& entry : std::filesystem::directory_iterator(source, ec)) {
         if (ec) {
             return HRESULT_FROM_WIN32(ec.value());
@@ -144,9 +142,14 @@ HRESULT callRegistrationExportForDll(const std::filesystem::path& dllPath, bool 
 
     const HRESULT hr = fn();
 
-    // Keep the IME module loaded until Setup exits. This matches the installer
-    // configuration that passed the elevated TSF registration test.
-    // Windows releases the module automatically when the Setup process exits.
+    // Keep the module loaded through the install process because that is the
+    // configuration that passed the elevated TSF registration test. During
+    // uninstall, registration has already been removed, so release the DLL
+    // before deleting the permanent install directory.
+    if (uninstall) {
+        FreeLibrary(module);
+    }
+
     logSetupAction(uninstall ? "Uninstall" : "Install", hr);
 
     if (SUCCEEDED(hr)) {
@@ -184,23 +187,18 @@ HRESULT uninstallMyanglish() {
         return hr;
     }
 
-    // The Store launcher currently starts Setup from its downloaded payload,
-    // so the permanent directory is normally not the running executable's
-    // directory and can be removed immediately after unregistering.
     const auto destination = installDirectory();
     if (!destination.empty()) {
         ec.clear();
         std::filesystem::remove_all(destination, ec);
         if (ec) {
             logSetupAction("Uninstall.RemoveInstallDirectory", HRESULT_FROM_WIN32(ec.value()));
-            // Registration already succeeded. Do not report uninstall failure
-            // solely because a file is temporarily locked.
-        } else {
-            logSetupAction("Uninstall.RemoveInstallDirectory", S_OK);
+            return HRESULT_FROM_WIN32(ec.value());
         }
+        logSetupAction("Uninstall.RemoveInstallDirectory", S_OK);
     }
 
-    return hr;
+    return S_OK;
 }
 
 HRESULT performSetupAction(bool uninstall) {
