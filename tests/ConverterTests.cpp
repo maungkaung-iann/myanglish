@@ -316,6 +316,59 @@ int main() {
             }
         }
 
+        const auto typoThne = converter.getContinuousCandidates("thne", 9);
+        tests.expectTrue(!typoThne.empty(), "Typo thne produces candidates");
+        if (!typoThne.empty()) {
+            tests.expectEqual(typoThne[0].burmese, u8"\u101E\u102F\u1036\u1038", "Typo thne -> thone -> expected Burmese");
+        }
+
+        const auto typoThhone = converter.getContinuousCandidates("thhone", 9);
+        tests.expectTrue(!typoThhone.empty(), "Typo thhone produces candidates");
+        if (!typoThhone.empty()) {
+            tests.expectEqual(typoThhone[0].burmese, u8"\u101E\u102F\u1036\u1038", "Typo thhone extra-char -> thone");
+        }
+
+        const auto typoThpne = converter.getContinuousCandidates("thpne", 9);
+        tests.expectTrue(!typoThpne.empty(), "Typo thpne produces candidates");
+        if (!typoThpne.empty()) {
+            tests.expectEqual(typoThpne[0].burmese, u8"\u101E\u102F\u1036\u1038", "Typo thpne substitution -> thone");
+        }
+
+        const auto typoTohne = converter.getContinuousCandidates("tohne", 9);
+        tests.expectTrue(!typoTohne.empty(), "Typo tohne produces candidates");
+        if (!typoTohne.empty()) {
+            tests.expectEqual(typoTohne[0].burmese, u8"\u101E\u102F\u1036\u1038", "Typo tohne transposition -> thone");
+        }
+
+        const auto shortStrict = converter.getCandidates("th", 9);
+        const auto shortContinuous = converter.getContinuousCandidates("th", 9);
+        tests.expectEqualSize(
+            shortContinuous.size(),
+            shortStrict.size(),
+            "Short input th bypasses typo correction"
+        );
+        if (!shortStrict.empty() && !shortContinuous.empty()) {
+            tests.expectEqual(
+                shortContinuous[0].burmese,
+                shortStrict[0].burmese,
+                "Short input th keeps strict first candidate"
+            );
+        }
+
+        const auto multiEditTypo = converter.getContinuousCandidates("txxne", 9);
+        tests.expectEqualSize(
+            multiEditTypo.size(),
+            1,
+            "Multi-edit typo txxne keeps raw fallback"
+        );
+        if (!multiEditTypo.empty()) {
+            tests.expectEqual(
+                multiEditTypo[0].burmese,
+                "txxne",
+                "Multi-edit typo txxne is not corrected"
+            );
+        }
+
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
         if (unknownCandidates.size() == 1) {

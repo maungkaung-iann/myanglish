@@ -265,6 +265,74 @@ bool consumeMedials(const std::string& text, std::size_t& index, std::string& ou
     return consumedAny;
 }
 
+bool isSingleTypoAway(const std::string& input, const std::string& target) {
+    if (input == target) {
+        return false;
+    }
+
+    const std::size_t inputLength = input.size();
+    const std::size_t targetLength = target.size();
+
+    if (inputLength + 1 < targetLength || targetLength + 1 < inputLength) {
+        return false;
+    }
+
+    // One substituted character.
+    if (inputLength == targetLength) {
+        std::size_t differences = 0;
+        for (std::size_t i = 0; i < inputLength; ++i) {
+            if (input[i] != target[i]) {
+                ++differences;
+            }
+        }
+
+        if (differences == 1) {
+            return true;
+        }
+
+        // One adjacent transposition.
+        for (std::size_t i = 0; i + 1 < inputLength; ++i) {
+            if (input[i] == target[i + 1]
+                && input[i + 1] == target[i]) {
+                std::string swapped = input;
+                std::swap(swapped[i], swapped[i + 1]);
+                if (swapped == target) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // One missing or extra character.
+    const std::string& shorter =
+        inputLength < targetLength ? input : target;
+    const std::string& longer =
+        inputLength < targetLength ? target : input;
+
+    std::size_t shortIndex = 0;
+    std::size_t longIndex = 0;
+    bool skipped = false;
+
+    while (shortIndex < shorter.size() && longIndex < longer.size()) {
+        if (shorter[shortIndex] == longer[longIndex]) {
+            ++shortIndex;
+            ++longIndex;
+            continue;
+        }
+
+        if (skipped) {
+            return false;
+        }
+
+        skipped = true;
+        ++longIndex;
+    }
+
+    return true;
+}
+
 } // namespace
 
 MyanglishConverter::MyanglishConverter(Dictionary dictionary, std::filesystem::path dataRoot)
@@ -1106,9 +1174,69 @@ std::vector<Candidate> MyanglishConverter::getContinuousCandidates(
     const std::string& myanglish,
     std::size_t limit
 ) const {
-    // alpha-0.8 deliberately has NO whole-sentence automatic segmentation.
-    // This compatibility API means "candidates for the one current word".
-    return getCandidates(myanglish, limit);
+    // Preserve all existing exact/rule/prefix/historical behavior first.
+    auto candidates = getCandidates(myanglish, limit);
+
+    const std::string normalized = toLowerAscii(trim(myanglish));
+    if (normalized.size() < 3) {
+        return candidates;
+    }
+
+    // getCandidates() returns the raw Roman input when nothing validated exists.
+    // Typo correction is allowed only in that final-fallback case.
+    const bool hasValidatedCandidate = std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](const Candidate& candidate) {
+            return !candidate.burmese.empty()
+                && candidate.burmese != myanglish;
+        }
+    );
+
+    if (hasValidatedCandidate) {
+        return candidates;
+    }
+
+    std::unordered_map<std::string, int> bestFrequencyByOutput;
+
+    for (const auto& entry : dictionary_.entries()) {
+        if (!isSingleTypoAway(normalized, entry.myanglish)) {
+            continue;
+        }
+
+        auto it = bestFrequencyByOutput.find(entry.burmese);
+        if (it == bestFrequencyByOutput.end() || entry.frequency > it->second) {
+            bestFrequencyByOutput[entry.burmese] = entry.frequency;
+        }
+    }
+
+    if (bestFrequencyByOutput.empty()) {
+        return candidates;
+    }
+
+    std::vector<Candidate> typoCandidates;
+    typoCandidates.reserve(bestFrequencyByOutput.size());
+
+    for (const auto& pair : bestFrequencyByOutput) {
+        typoCandidates.push_back(Candidate{pair.first, pair.second});
+    }
+
+    std::sort(
+        typoCandidates.begin(),
+        typoCandidates.end(),
+        [](const Candidate& left, const Candidate& right) {
+            if (left.frequency != right.frequency) {
+                return left.frequency > right.frequency;
+            }
+            return left.burmese < right.burmese;
+        }
+    );
+
+    if (typoCandidates.size() > limit) {
+        typoCandidates.resize(limit);
+    }
+
+    return typoCandidates;
 }
 
 bool MyanglishConverter::hasExactInput(const std::string& myanglish) const {
