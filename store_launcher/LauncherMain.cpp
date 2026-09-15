@@ -74,7 +74,7 @@ std::wstring downloadUrl() {
 }
 
 constexpr wchar_t kExpectedPayloadSha256[] =
-    L"6630B75F2D8803ECB34D2EEB04008FB6286AB47D90745D8CED5DAD457E0C04F9";
+    L"109378C241F730F37C7445FB4B3066BFE54F8AD5A6DE8E033FB46E66BCA4520D";
 
 bool verifyPayloadSha256(const std::filesystem::path& path) {
     HANDLE file = CreateFileW(
