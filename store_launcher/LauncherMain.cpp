@@ -1,12 +1,14 @@
 #include <Windows.h>
 #include <Shellapi.h>
 #include <urlmon.h>
+#include <bcrypt.h>
 
 #include <filesystem>
 #include <string>
 #include <thread>
 
 #pragma comment(lib, "urlmon.lib")
+#pragma comment(lib, "bcrypt.lib")
 
 namespace {
 
@@ -15,11 +17,14 @@ constexpr int kDownloadButtonId = 2001;
 constexpr int kInstallButtonId = 2002;
 constexpr UINT kDownloadFinishedMessage = WM_APP + 1;
 constexpr UINT kDownloadFailedMessage = WM_APP + 2;
+constexpr UINT kInstallStartFailedMessage = WM_APP + 3;
+constexpr UINT kInstallFinishedMessage = WM_APP + 4;
+constexpr UINT kInstallFailedMessage = WM_APP + 5;
 
 // Replace this with an immutable/versioned HTTPS release asset before Store submission.
 constexpr wchar_t kDefaultDownloadUrl[] =
-    L"https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.3/"
-    L"Myanglish-Installer-Payload-v1.0.3.zip";
+    L"https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.5/"
+    L"Myanglish-Installer-Payload-v1.0.5.zip";
 
 HWND g_status = nullptr;
 HWND g_downloadButton = nullptr;
@@ -68,6 +73,142 @@ std::wstring downloadUrl() {
     return kDefaultDownloadUrl;
 }
 
+constexpr wchar_t kExpectedPayloadSha256[] =
+    L"6630B75F2D8803ECB34D2EEB04008FB6286AB47D90745D8CED5DAD457E0C04F9";
+
+bool verifyPayloadSha256(const std::filesystem::path& path) {
+    HANDLE file = CreateFileW(
+        path.c_str(),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+    );
+
+    if (file == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    BCRYPT_ALG_HANDLE alg = nullptr;
+    BCRYPT_HASH_HANDLE hash = nullptr;
+    PUCHAR hashObject = nullptr;
+    bool ok = false;
+
+    DWORD objectLength = 0;
+    DWORD hashLength = 0;
+    DWORD cbResult = 0;
+
+    if (BCryptOpenAlgorithmProvider(
+            &alg,
+            BCRYPT_SHA256_ALGORITHM,
+            nullptr,
+            0) < 0) {
+        goto cleanup;
+    }
+
+    if (BCryptGetProperty(
+            alg,
+            BCRYPT_OBJECT_LENGTH,
+            reinterpret_cast<PUCHAR>(&objectLength),
+            sizeof(objectLength),
+            &cbResult,
+            0) < 0) {
+        goto cleanup;
+    }
+
+    if (BCryptGetProperty(
+            alg,
+            BCRYPT_HASH_LENGTH,
+            reinterpret_cast<PUCHAR>(&hashLength),
+            sizeof(hashLength),
+            &cbResult,
+            0) < 0) {
+        goto cleanup;
+    }
+
+    hashObject = new (std::nothrow) UCHAR[objectLength];
+    if (!hashObject) {
+        goto cleanup;
+    }
+
+    if (BCryptCreateHash(
+            alg,
+            &hash,
+            hashObject,
+            objectLength,
+            nullptr,
+            0,
+            0) < 0) {
+        goto cleanup;
+    }
+
+    BYTE buffer[64 * 1024];
+    for (;;) {
+        DWORD bytesRead = 0;
+
+        if (!ReadFile(
+                file,
+                buffer,
+                sizeof(buffer),
+                &bytesRead,
+                nullptr)) {
+            goto cleanup;
+        }
+
+        if (bytesRead == 0) {
+            break;
+        }
+
+        if (BCryptHashData(
+                hash,
+                buffer,
+                bytesRead,
+                0) < 0) {
+            goto cleanup;
+        }
+    }
+
+    if (hashLength != 32) {
+        goto cleanup;
+    }
+
+    BYTE digest[32]{};
+
+    if (BCryptFinishHash(
+            hash,
+            digest,
+            sizeof(digest),
+            0) < 0) {
+        goto cleanup;
+    }
+
+    wchar_t hex[65]{};
+    for (DWORD i = 0; i < 32; ++i) {
+        swprintf_s(
+            hex + (i * 2),
+            3,
+            L"%02X",
+            digest[i]
+        );
+    }
+
+    ok = (_wcsicmp(hex, kExpectedPayloadSha256) == 0);
+
+cleanup:
+    if (hash) {
+        BCryptDestroyHash(hash);
+    }
+
+    if (alg) {
+        BCryptCloseAlgorithmProvider(alg, 0);
+    }
+
+    delete[] hashObject;
+    CloseHandle(file);
+    return ok;
+}
 std::wstring powerShellQuote(const std::filesystem::path& path) {
     std::wstring value = path.wstring();
     std::wstring escaped;
@@ -162,7 +303,19 @@ void beginDownload(HWND window) {
             nullptr
         );
 
-        if (FAILED(hr) || !extractZip()) {
+        if (FAILED(hr)) {
+            PostMessageW(window, kDownloadFailedMessage, 0, 0);
+            return;
+        }
+
+        if (!verifyPayloadSha256(zipPath())) {
+            std::error_code ec;
+            std::filesystem::remove(zipPath(), ec);
+            PostMessageW(window, kDownloadFailedMessage, 0, 0);
+            return;
+        }
+
+        if (!extractZip()) {
             PostMessageW(window, kDownloadFailedMessage, 0, 0);
             return;
         }
@@ -183,29 +336,38 @@ void launchInstaller(HWND window) {
         return;
     }
 
-    // The setup EXE itself also requests requireAdministrator. Using runas here
-    // makes the intended elevation explicit. Windows will show the UAC prompt;
-    // the user must approve it.
-    HINSTANCE result = ShellExecuteW(
-        window,
-        L"runas",
-        setup.c_str(),
-        L"/silent",
-        setup.parent_path().c_str(),
-        SW_SHOWNORMAL
-    );
+    EnableWindow(g_installButton, FALSE);
+    EnableWindow(g_downloadButton, FALSE);
+    setStatus(L"Installing Myanglish... Approve the Windows UAC prompt.");
 
-    if (reinterpret_cast<INT_PTR>(result) <= 32) {
-        MessageBoxW(
-            window,
-            L"Myanglish Setup could not be started.\n\nIf you cancelled the UAC prompt, click Install again.",
-            L"Myanglish",
-            MB_OK | MB_ICONERROR
-        );
-        return;
-    }
+    std::thread([window, setup]() {
+        SHELLEXECUTEINFOW sei{};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.hwnd = window;
+        sei.lpVerb = L"runas";
+        sei.lpFile = setup.c_str();
+        sei.lpParameters = L"/silent";
+        sei.lpDirectory = setup.parent_path().c_str();
+        sei.nShow = SW_SHOWNORMAL;
 
-    setStatus(L"Installer started. Approve the Windows UAC prompt to finish installation.");
+        if (!ShellExecuteExW(&sei) || sei.hProcess == nullptr) {
+            PostMessageW(window, WM_APP + 3, 0, 0);
+            return;
+        }
+
+        WaitForSingleObject(sei.hProcess, INFINITE);
+
+        DWORD exitCode = 1;
+        GetExitCodeProcess(sei.hProcess, &exitCode);
+        CloseHandle(sei.hProcess);
+
+        if (exitCode == 0) {
+            PostMessageW(window, WM_APP + 4, 0, 0);
+        } else {
+            PostMessageW(window, WM_APP + 5, exitCode, 0);
+        }
+    }).detach();
 }
 
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -289,6 +451,42 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         MessageBoxW(
             window,
             L"Myanglish could not be downloaded or extracted.",
+            L"Myanglish",
+            MB_OK | MB_ICONERROR
+        );
+        return 0;
+
+    case kInstallStartFailedMessage:
+        setStatus(L"Installation could not be started.");
+        EnableWindow(g_downloadButton, TRUE);
+        EnableWindow(g_installButton, TRUE);
+        MessageBoxW(
+            window,
+            L"Myanglish Setup could not be started.\n\nIf you cancelled the UAC prompt, click Install again.",
+            L"Myanglish",
+            MB_OK | MB_ICONERROR
+        );
+        return 0;
+
+    case kInstallFinishedMessage:
+        setStatus(L"Installed successfully. Press Win + Space and select Myanglish.");
+        EnableWindow(g_downloadButton, TRUE);
+        EnableWindow(g_installButton, TRUE);
+        MessageBoxW(
+            window,
+            L"Myanglish was installed successfully.\n\nPress Win + Space and select Myanglish.",
+            L"Myanglish",
+            MB_OK | MB_ICONINFORMATION
+        );
+        return 0;
+
+    case kInstallFailedMessage:
+        setStatus(L"Installation failed. Please try again.");
+        EnableWindow(g_downloadButton, TRUE);
+        EnableWindow(g_installButton, TRUE);
+        MessageBoxW(
+            window,
+            L"Myanglish installation failed.",
             L"Myanglish",
             MB_OK | MB_ICONERROR
         );
