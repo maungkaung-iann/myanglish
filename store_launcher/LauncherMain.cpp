@@ -23,8 +23,8 @@ constexpr UINT kInstallFailedMessage = WM_APP + 5;
 
 // Replace this with an immutable/versioned HTTPS release asset before Store submission.
 constexpr wchar_t kDefaultDownloadUrl[] =
-    L"https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.5/"
-    L"Myanglish-Installer-Payload-v1.0.5.zip";
+    L"https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.6/"
+    L"Myanglish-Installer-Payload-v1.0.6.zip";
 
 HWND g_status = nullptr;
 HWND g_downloadButton = nullptr;
