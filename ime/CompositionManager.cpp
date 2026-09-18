@@ -241,8 +241,6 @@ CompositionManager::CompositionManager(
         // small core dictionary so duplicate cleanup and future updates are easy.
         for (const auto& extraFile : {
                  dataRoot_ / "data" / "merged_candidates.csv",
-                 dataRoot_ / "data" / "loanwords.csv",
-                 dataRoot_ / "data" / "imported_loanwords_alpha1083_pack2.csv",
                  dataRoot_ / "data" / "alpha08_candidates.csv"
              }) {
             std::string extraError;
@@ -276,7 +274,6 @@ CompositionManager::CompositionManager(
             );
 
         loadUserHistory();
-        loadLoanwordInputs();
 
         debugLog(
             std::string("Dictionary loaded: ") +
@@ -414,145 +411,7 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
     return result;
 }
 
-void CompositionManager::loadLoanwordInputs() {
-    loanwordInputs_.clear();
-
-    // Every row in both reviewed loanword candidate files is a loanword.
-    for (const auto& loanwordFile : {
-             dataRoot_ / "data" / "loanwords.csv",
-             dataRoot_ / "data" / "imported_loanwords_alpha1083_pack2.csv"
-         }) {
-        std::ifstream file(
-            loanwordFile,
-            std::ios::binary
-        );
-
-        std::string line;
-        std::size_t lineNumber = 0;
-
-        while (file.is_open() && std::getline(file, line)) {
-            ++lineNumber;
-
-            if (lineNumber == 1
-                && line.rfind("\xEF\xBB\xBF", 0) == 0) {
-                line.erase(0, 3);
-            }
-
-            if (line.empty()) {
-                continue;
-            }
-
-            const auto comma = line.find(',');
-            if (comma == std::string::npos) {
-                continue;
-            }
-
-            std::string raw = line.substr(0, comma);
-
-            for (char& ch : raw) {
-                if (ch >= 'A' && ch <= 'Z') {
-                    ch = static_cast<char>(ch - 'A' + 'a');
-                }
-            }
-
-            if (lineNumber == 1 && raw == "myanglish") {
-                continue;
-            }
-
-            if (!raw.empty()) {
-                loanwordInputs_.insert(raw);
-            }
-        }
-    }
-
-    // Lexicon Pack 2 has explicit source metadata. Only source=loanword is added.
-    {
-        std::ifstream file(
-            dataRoot_ / "data" / "imported_lexicon_alpha1083_pack2.csv",
-            std::ios::binary
-        );
-
-        std::string line;
-        std::size_t lineNumber = 0;
-
-        while (file.is_open() && std::getline(file, line)) {
-            ++lineNumber;
-
-            if (lineNumber == 1
-                && line.rfind("\xEF\xBB\xBF", 0) == 0) {
-                line.erase(0, 3);
-            }
-
-            if (line.empty()) {
-                continue;
-            }
-
-            std::vector<std::string> columns;
-            std::size_t start = 0;
-
-            while (start <= line.size()) {
-                const auto comma = line.find(',', start);
-                if (comma == std::string::npos) {
-                    columns.push_back(line.substr(start));
-                    break;
-                }
-
-                columns.push_back(
-                    line.substr(start, comma - start)
-                );
-
-                start = comma + 1;
-            }
-
-            if (columns.size() < 4) {
-                continue;
-            }
-
-            std::string raw = columns[0];
-            std::string source = columns[3];
-
-            for (char& ch : raw) {
-                if (ch >= 'A' && ch <= 'Z') {
-                    ch = static_cast<char>(ch - 'A' + 'a');
-                }
-            }
-
-            for (char& ch : source) {
-                if (ch >= 'A' && ch <= 'Z') {
-                    ch = static_cast<char>(ch - 'A' + 'a');
-                }
-            }
-
-            if (source == "loanword" && !raw.empty()) {
-                loanwordInputs_.insert(raw);
-            }
-        }
-    }
-
-    debugLog(
-        std::string("Loanword inputs loaded: ")
-        + std::to_string(loanwordInputs_.size())
-    );
-}
-
-bool CompositionManager::isCurrentLoanword() const noexcept {
-    if (buffer_.empty()) {
-        return false;
-    }
-
-    std::string raw = buffer_;
-
-    for (char& ch : raw) {
-        if (ch >= 'A' && ch <= 'Z') {
-            ch = static_cast<char>(ch - 'A' + 'a');
-        }
-    }
-
-    return loanwordInputs_.find(raw)
-        != loanwordInputs_.end();
-}
-
-bool CompositionManager::isRawLoanwordCandidate(
+bool CompositionManager::isRawCandidate(
     std::size_t candidateIndex
 ) const noexcept {
     // Candidate #2 (zero-based index 1) is always the exact Roman text typed
