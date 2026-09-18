@@ -333,22 +333,16 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
         return result;
     }
 
-    // R1.16: explicitly tagged loanwords always offer their original Roman
-    // spelling as candidate #1. Myanmar transliterations follow at #2 onward.
-    // Stack/kinzi compositions never offer a Roman candidate.
-    if (isRawLoanwordCandidate(0)) {
-        const std::wstring raw = utf8ToUtf16(buffer_);
-        if (!raw.empty()) {
-            result.push_back(raw);
-        }
-    }
-    if (result.size() >= limit) {
-        return result;
-    }
+    // Raw Myanglish is always candidate #2 when at least one Myanmar
+    // conversion exists. Candidate #1 remains the best Myanmar conversion.
+    // Stack/kinzi compositions intentionally do not offer a Roman candidate.
+    const bool allowRawCandidate =
+        !stackPrefixEnabled_ && stackJoinPrefix_.empty() && !kinziPending_;
 
-    // Stable 0.10.8.3 pipeline first; adaptive ranking is only a post-process.
+    // Stable conversion/ranking pipeline first; raw text is inserted only after
+    // Myanmar ranking so it can never displace the best Myanmar candidate.
     if (converter_ != nullptr) {
-        const std::size_t fetchLimit = std::max<std::size_t>(limit, 32);
+        const std::size_t fetchLimit = std::max<std::size_t>(limit + 1, 32);
         const auto candidates = converter_->getContinuousCandidates(buffer_, fetchLimit);
 
         struct RankedText {
@@ -399,23 +393,26 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
         );
 
         for (const auto& item : ranked) {
-            const bool duplicate = std::any_of(
-                result.begin(), result.end(),
-                [&](const std::wstring& text) { return text == item.text; }
-            );
-            if (duplicate) {
-                continue;
-            }
             result.push_back(item.text);
-            if (result.size() >= limit) {
-                break;
-            }
         }
     }
 
+    if (result.empty()) {
+        return result;
+    }
+
+    if (allowRawCandidate) {
+        const std::wstring raw = utf8ToUtf16(buffer_);
+        if (!raw.empty()) {
+            result.insert(result.begin() + 1, raw);
+        }
+    }
+
+    if (result.size() > limit) {
+        result.resize(limit);
+    }
     return result;
 }
-
 
 void CompositionManager::loadLoanwordInputs() {
     loanwordInputs_.clear();
@@ -558,8 +555,11 @@ bool CompositionManager::isCurrentLoanword() const noexcept {
 bool CompositionManager::isRawLoanwordCandidate(
     std::size_t candidateIndex
 ) const noexcept {
-    return candidateIndex == 0
-        && isCurrentLoanword()
+    // Candidate #2 (zero-based index 1) is always the exact Roman text typed
+    // by the user. It uses the existing smart leading-boundary + trailing-space
+    // raw commit behavior.
+    return candidateIndex == 1
+        && !buffer_.empty()
         && !stackPrefixEnabled_
         && stackJoinPrefix_.empty()
         && !kinziPending_;
