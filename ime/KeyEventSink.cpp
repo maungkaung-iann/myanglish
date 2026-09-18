@@ -36,6 +36,16 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM, LPARAM,
 }
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
+
+    // Re-check routing at the real key-down stage. On some JIS/TSF hosts a key
+    // that OnTestKeyDown did not claim can still arrive here. Calling
+    // processKeyDown unconditionally would then make Myanglish consume an ASCII
+    // letter even while plain CapsLock capital bypass is active.
+    if (!service_.shouldHandleKeyDown(pic, wParam)) {
+        *pfEaten = FALSE;
+        return S_OK;
+    }
+
     const HRESULT hr = service_.processKeyDown(pic, wParam);
     if (hr == S_OK) { *pfEaten = TRUE; return S_OK; }
     if (hr == S_FALSE) { *pfEaten = FALSE; return S_OK; }
