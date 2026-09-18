@@ -1091,19 +1091,6 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         appendUnique(ordered, extras);
     }
 
-    // User-requested hard removal: these standalone spellings must never be
-    // offered again, even if a phonetic rule can generate them.
-    ordered.erase(
-        std::remove_if(
-            ordered.begin(), ordered.end(),
-            [](const Candidate& candidate) {
-                return candidate.burmese == u8"ဘွတ်"
-                    || candidate.burmese == u8"ဘုတ်";
-            }
-        ),
-        ordered.end()
-    );
-
     if (ordered.empty()) {
         return {Candidate{originalInput, 0}};
     }
