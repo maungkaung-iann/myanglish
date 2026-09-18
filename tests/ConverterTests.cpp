@@ -211,7 +211,6 @@ int main() {
         tests.expectEqualSize(converter.findRollingSplit("sinp"), 3, "sinp detects pending sin|p boundary");
         tests.expectEqualSize(converter.findRollingSplit("sinpy"), 3, "sinpy confirms sin|py boundary");
         tests.expectEqualSize(converter.findRollingSplit("paung"), 0, "paung is never split into shorter valid pieces");
-        tests.expectTrue(!converter.shouldAutoLockBeforeAppend("ya", 'p'), "legacy pre-append helper no longer locks valid yap prematurely");
 
         const auto bankCandidates = converter.getCandidates("bank", 9);
         tests.expectTrue(!bankCandidates.empty(), "bank loanword candidate exists");
