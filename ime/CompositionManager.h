@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <cstdint>
 
@@ -37,8 +36,7 @@ public:
     // Candidate texts are for the current editable segment only. The visible
     // TSF composition can contain earlier manually selected locked segments.
     std::vector<std::wstring> currentCandidateTexts(std::size_t limit = 9) const;
-    bool isCurrentLoanword() const noexcept;
-    bool isRawLoanwordCandidate(std::size_t candidateIndex) const noexcept;
+    bool isRawCandidate(std::size_t candidateIndex) const noexcept;
 
     HRESULT insertCharacter(ITfContext* context, wchar_t character);
     HRESULT deleteBackspace(ITfContext* context);
@@ -148,13 +146,11 @@ public:
         std::int64_t lastUsed = 0;
     };
 
-    void loadLoanwordInputs();
     void loadUserHistory();
     void recordUserSelection(const std::string& raw, const std::wstring& candidate);
     int userChoiceScore(const std::string& raw, const std::wstring& candidate) const;
 
     std::filesystem::path dataRoot_;
-    std::unordered_set<std::string> loanwordInputs_;
     std::unique_ptr<myanglish::MyanglishConverter> converter_;
     std::unordered_map<std::string, std::unordered_map<std::wstring, UserChoiceStats>> userHistory_;
     std::wstring lastPreviewCandidate_;
