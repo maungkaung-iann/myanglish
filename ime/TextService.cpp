@@ -790,7 +790,9 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         return false;
     }
     if (!enabled_) {
-        return isModeToggle(keyCode);
+        // English mode created by Shift+CapsLock owns Roman letters so they
+        // remain lowercase even if the host observes an unexpected Caps state.
+        return isModeToggle(keyCode) || isAsciiLetter(keyCode);
     }
     // Alpha 0.9.3: Shift by itself is never eaten. Stack mode is armed only
     // when an ASCII letter is actually typed while Shift is physically held.
@@ -1126,11 +1128,19 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (!enabled_) {
         if (isModeToggle(keyCode)) {
             enabled_ = true;
+            plainCapsCapitalMode_ = false;
             if (languageBarButton_ != nullptr) {
                 languageBarButton_->notifyModeChanged();
             }
             debugLog("Switched to Myanglish mode");
             return S_OK;
+        }
+        if (isAsciiLetter(keyCode)) {
+            // Shift+CapsLock English mode is deliberately lowercase-only.
+            return recover(
+                compositionManager_.insertLiteral(context, toLowerAsciiKey(keyCode)),
+                "insert lowercase English mode letter"
+            );
         }
         return S_FALSE;
     }
@@ -1149,6 +1159,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             }
         }
         enabled_ = false;
+        plainCapsCapitalMode_ = false;
         if (languageBarButton_ != nullptr) {
             languageBarButton_->notifyModeChanged();
         }
