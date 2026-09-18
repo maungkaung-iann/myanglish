@@ -72,7 +72,7 @@ std::wstring getText(HWND window, int id) {
 bool loadLiveCandidates() {
     std::ifstream file(settingsPath(), std::ios::binary);
     if (!file.is_open()) {
-        return false;
+        return true;
     }
 
     std::string line;
@@ -87,7 +87,7 @@ bool loadLiveCandidates() {
             return false;
         }
     }
-    return false;
+    return true;
 }
 
 bool saveLiveCandidates(bool enabled) {
@@ -161,7 +161,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
         );
 
         HWND checkbox = CreateWindowW(
-            L"BUTTON", L"Legacy candidate popup setting",
+            L"BUTTON", L"Show candidate popup on first Space",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
             24, 45, 300, 26,
             window,
@@ -171,7 +171,7 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
 
         CreateWindowW(
             L"STATIC",
-            L"Typing stays raw. First Space = #1; second Space opens ranked choices.",
+            L"ON (default): First Space opens all candidates with #1 selected. OFF: legacy second-Space popup.",
             WS_CHILD | WS_VISIBLE,
             44, 76, 500, 22,
             window, nullptr, nullptr, nullptr
