@@ -72,6 +72,10 @@ private:
     TfClientId clientId_ = TF_CLIENTID_NULL;
     bool active_ = false;
     bool enabled_ = true;
+    // Tracks plain CapsLock independently of TSF/JIS GetKeyState timing.
+    // Shift+CapsLock remains the R1.14 persistent language-mode shortcut.
+    mutable bool plainCapsCapitalMode_ = false;
+    mutable bool plainCapsKeyPending_ = false;
     bool liveCandidatesEnabled_ = true;
     bool candidateSelectionActive_ = false;
     bool conversionActive_ = false;
