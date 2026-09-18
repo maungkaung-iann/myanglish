@@ -801,7 +801,8 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         keyCode == VK_CAPITAL
         && (GetKeyState(VK_SHIFT) >= 0)
     ) {
-        return false;
+        return compositionManager_.hasBufferedText()
+            || compositionManager_.hasActiveComposition();
     }
     if (isModeToggle(keyCode)) {
         return true;
@@ -815,7 +816,12 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         }
     }
 
+    // Plain Windows CapsLock ON = temporary English CAPITAL typing.
+    // Do not consume Roman letters; Windows/the host applies the normal CapsLock state.
     if (isAsciiLetter(keyCode)) {
+        if ((GetKeyState(VK_CAPITAL) & 0x0001) != 0) {
+            return false;
+        }
         return true;
     }
     if (isR111MyanmarDigitKey(keyCode)) {
@@ -1082,6 +1088,26 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         keyCode == VK_CAPITAL
         && (GetKeyState(VK_SHIFT) >= 0)
     ) {
+        HRESULT capsCommit = S_FALSE;
+        if (conversionActive_ || candidateSelectionActive_) {
+            capsCommit = compositionManager_.commitCandidate(context, selectedCandidateIndex_);
+        } else if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
+            capsCommit = compositionManager_.commitOriginal(context);
+        }
+
+        candidateSelectionActive_ = false;
+        conversionActive_ = false;
+        selectedCandidateIndex_ = 0;
+        candidateWindow_.hide();
+        stackMode_ = false;
+        compositionManager_.setStackPrefixEnabled(false);
+
+        if (FAILED(capsCommit) && capsCommit != S_FALSE) {
+            debugLogHr("commit composition before plain CapsLock", capsCommit);
+        }
+
+        // Do not consume plain CapsLock. Windows must toggle its normal
+        // CapsLock state and keyboard LED.
         return S_FALSE;
     }
 
