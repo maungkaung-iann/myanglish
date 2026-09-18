@@ -1100,7 +1100,7 @@ HRESULT CompositionManager::executeEdit(
         }
 
         std::wstring preview = candidates[candidateIndex];
-        if (isRawLoanwordCandidate(candidateIndex)) {
+        if (isRawCandidate(candidateIndex)) {
             if (needsLeadingRawBoundarySpace(editCookie)) {
                 preview.insert(preview.begin(), L' ');
             }
