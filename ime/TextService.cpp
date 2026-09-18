@@ -1586,17 +1586,34 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         }
 
         if (!conversionActive_) {
-            // FIRST Space: convert raw Myanglish to candidate #1 inline. No popup.
+            // FIRST Space always previews candidate #1. When the setting is ON
+            // (the default), open the complete candidate popup immediately with
+            // #1 selected. When OFF, preserve the legacy hidden-first-Space flow.
             conversionActive_ = true;
             candidateSelectionActive_ = true;
             selectedCandidateIndex_ = 0;
+
+            const HRESULT previewHr = compositionManager_.previewCandidate(context, 0);
+            if (FAILED(previewHr)) {
+                return recover(previewHr, "first space preview candidate #1");
+            }
+
+            if (liveCandidatesEnabled_) {
+                if (!openCandidateWindow()) {
+                    candidateWindow_.hide();
+                } else {
+                    candidateWindow_.setSelection(0);
+                }
+                return S_OK;
+            }
+
             candidateWindow_.hide();
-            return recover(compositionManager_.previewCandidate(context, 0), "first space convert to candidate #1 without popup");
+            return S_OK;
         }
 
-        // R1.16 SECOND Space: open popup and move from raw loanword #1 to its
-        // first Myanmar transliteration at #2. If there is only one candidate,
-        // keep #1 selected in the popup. Further Space presses cycle normally.
+        // Legacy OFF mode: SECOND Space opens the popup at #2. In the default
+        // ON mode the popup is already visible, so this block is not reached:
+        // the visible-popup Space handler above advances #1 -> #2 -> #3...
         if (!openCandidateWindow()) {
             return S_FALSE;
         }
@@ -1607,7 +1624,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         conversionActive_ = true;
         return recover(
             compositionManager_.previewCandidate(context, selectedCandidateIndex_),
-            "second space open popup and select candidate #2"
+            "legacy second space open popup and select candidate #2"
         );
     }
 
