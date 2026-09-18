@@ -613,7 +613,7 @@ HRESULT TextService::commitVisibleOnFocusLoss() noexcept {
     // every candidate/conversion flag so no other app can inherit stale state.
     HRESULT hr = S_FALSE;
     if (conversionActive_ || candidateSelectionActive_) {
-        hr = compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_)
+        hr = compositionManager_.isRawCandidate(selectedCandidateIndex_)
             ? compositionManager_.commitOriginalAndInsertLiteral(lastContext_, L' ')
             : compositionManager_.commitCandidate(lastContext_, selectedCandidateIndex_);
     } else {
@@ -1187,14 +1187,14 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(hr, "enter commit selected candidate");
         }
         if (keyCode == VK_TAB) {
-            const bool rawLoanword =
-                compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+            const bool rawCandidate =
+                compositionManager_.isRawCandidate(selectedCandidateIndex_);
             candidateWindow_.hide();
             candidateSelectionActive_ = false;
             conversionActive_ = false;
             selectedCandidateIndex_ = 0;
             stackMode_ = false;
-            const HRESULT hr = rawLoanword
+            const HRESULT hr = rawCandidate
                 ? compositionManager_.commitOriginalAndInsertLiteral(context, L' ')
                 : compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ');
             compositionManager_.setStackPrefixEnabled(false);
@@ -1409,15 +1409,15 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         }
 
         const bool converted = conversionActive_ || candidateSelectionActive_;
-        const bool rawLoanword = converted
-            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        const bool rawCandidate = converted
+            && compositionManager_.isRawCandidate(selectedCandidateIndex_);
         candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
         compositionManager_.setStackPrefixEnabled(false);
-        const HRESULT hr = rawLoanword
+        const HRESULT hr = rawCandidate
             ? compositionManager_.commitOriginalAndInsertLiteral(context, digit)
             : (converted
                 ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, digit)
@@ -1440,15 +1440,15 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         }
 
         const bool converted = conversionActive_ || candidateSelectionActive_;
-        const bool rawLoanword = converted
-            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        const bool rawCandidate = converted
+            && compositionManager_.isRawCandidate(selectedCandidateIndex_);
         candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
         compositionManager_.setStackPrefixEnabled(false);
-        const HRESULT hr = rawLoanword
+        const HRESULT hr = rawCandidate
             ? compositionManager_.commitOriginalAndInsertLiteral(context, mark)
             : (converted
                 ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, mark)
@@ -1550,14 +1550,14 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             );
         }
         const bool converted = conversionActive_ || candidateSelectionActive_;
-        const bool rawLoanword = converted
-            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        const bool rawCandidate = converted
+            && compositionManager_.isRawCandidate(selectedCandidateIndex_);
         candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
-        const HRESULT hr = rawLoanword
+        const HRESULT hr = rawCandidate
             ? compositionManager_.commitOriginalAndInsertLiteral(context, punctuation)
             : (converted
                 ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, punctuation)
@@ -1633,14 +1633,14 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return S_FALSE;
         }
         const bool converted = conversionActive_ || candidateSelectionActive_;
-        const bool rawLoanword = converted
-            && compositionManager_.isRawLoanwordCandidate(selectedCandidateIndex_);
+        const bool rawCandidate = converted
+            && compositionManager_.isRawCandidate(selectedCandidateIndex_);
         candidateWindow_.hide();
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         stackMode_ = false;
-        const HRESULT hr = rawLoanword
+        const HRESULT hr = rawCandidate
             ? compositionManager_.commitOriginalAndInsertLiteral(context, L' ')
             : (converted
                 ? compositionManager_.commitVisiblePreviewAndInsertLiteral(context, L' ')
