@@ -1119,41 +1119,42 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         return S_OK;
     }
 
-    if (isShortcutModifierPressed()) {
-        return S_FALSE;
-    }
-
-    if (!enabled_) {
-        if (isModeToggle(keyCode)) {
-            enabled_ = true;
-            if (languageBarButton_ != nullptr) {
-                languageBarButton_->notifyModeChanged();
-            }
-            debugLog("Switched to Myanglish mode");
-            return S_OK;
-        }
-        return S_FALSE;
-    }
-
-    // Shift+Space = persistent Myanglish <-> English. If a raw word is being
-    // typed, keep it exactly as typed before leaving Myanglish mode.
+    // Shift+CapsLock must be checked before the generic modifier guard.
+    // Otherwise the held Shift makes the mode-switch key fall through unchanged.
     if (isModeToggle(keyCode)) {
         candidateSelectionActive_ = false;
         conversionActive_ = false;
         selectedCandidateIndex_ = 0;
         candidateWindow_.hide();
-        if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
-            const HRESULT hr = compositionManager_.commitOriginal(context);
-            if (FAILED(hr) && hr != S_FALSE) {
-                return recover(hr, "commit raw before English mode");
+        stackMode_ = false;
+        compositionManager_.setStackPrefixEnabled(false);
+
+        if (enabled_) {
+            if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
+                const HRESULT hr = compositionManager_.commitOriginal(context);
+                if (FAILED(hr) && hr != S_FALSE) {
+                    return recover(hr, "commit raw before ShiftCaps English mode");
+                }
             }
+            enabled_ = false;
+            plainCapsCapitalMode_ = false;
+            if (languageBarButton_ != nullptr) languageBarButton_->notifyModeChanged();
+            debugLog("Shift+CapsLock: switched to lowercase English mode");
+        } else {
+            enabled_ = true;
+            plainCapsCapitalMode_ = false;
+            if (languageBarButton_ != nullptr) languageBarButton_->notifyModeChanged();
+            debugLog("Shift+CapsLock: switched to Myanglish mode");
         }
-        enabled_ = false;
-        if (languageBarButton_ != nullptr) {
-            languageBarButton_->notifyModeChanged();
-        }
-        debugLog("Switched to English mode");
         return S_OK;
+    }
+
+    if (isShortcutModifierPressed()) {
+        return S_FALSE;
+    }
+
+    if (!enabled_) {
+        return S_FALSE;
     }
 
     // Alpha 0.9.3: a Shift tap does nothing. We arm stack mode only when
