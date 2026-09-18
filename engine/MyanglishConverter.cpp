@@ -479,17 +479,13 @@ MyanglishConverter::MyanglishConverter(Dictionary dictionary, std::filesystem::p
         }
     };
 
-    // Historical hand-entered mappings and loanwords are candidate sources,
+    // Historical hand-entered mappings are an optional candidate source,
     // NOT overrides of alpha-0.3 stable conversions. This prevents old rows
     // such as be->ဘီ or in->အိမ် from replacing stable phonetic results while
     // still keeping them available after the primary candidate.
     loadExtraCandidateFile(
         dataRoot_ / "data" / "historical_candidates.csv",
         historicalCandidatesByInput_
-    );
-    loadExtraCandidateFile(
-        dataRoot_ / "data" / "loanwords.csv",
-        loanwordCandidatesByInput_
     );
 
     // Companion metadata from the user's reviewed 36-family table. It is used
@@ -1013,7 +1009,7 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         }
     }
 
-    // Deduplicate and rank the core before adding optional historical/loanword
+    // Deduplicate and rank the core before adding optional historical
     // candidates. Those extra sources must never silently replace stable core
     // behavior.
     if (!candidates.empty()) {
@@ -1040,8 +1036,6 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
     }
 
     const auto historicalIt = historicalCandidatesByInput_.find(normalizedInput);
-    const auto loanwordIt = loanwordCandidatesByInput_.find(normalizedInput);
-
     std::vector<Candidate> extras;
     auto appendExtraSource = [&](const auto& it, const auto& end) {
         if (it == end) {
@@ -1060,7 +1054,6 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         }
     };
     appendExtraSource(historicalIt, historicalCandidatesByInput_.end());
-    appendExtraSource(loanwordIt, loanwordCandidatesByInput_.end());
 
     auto appendUnique = [](std::vector<Candidate>& target, const std::vector<Candidate>& source) {
         for (const auto& candidate : source) {
@@ -1076,7 +1069,7 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
     std::vector<Candidate> ordered;
 
     // For inputs of three or more letters without an explicit stable mapping,
-    // a hand-entered historical word or exact English loanword is usually more
+    // a hand-entered historical word is usually more
     // intentional than a generic phonetic rule (bank -> ဘဏ်, computer -> ...).
     // Very short codes such as ai/in/o remain phonetic-first to protect alpha-0.3.
     const bool extrasFirst = !hasExactCoreMapping
@@ -1140,16 +1133,10 @@ bool MyanglishConverter::hasInputPrefix(const std::string& prefix) const {
         }
     }
 
-    // Historical and loanword candidate sources are not stored in Dictionary,
+    // Historical candidate sources are not stored in Dictionary,
     // but they are real reviewed inputs and therefore must also keep a rolling
     // buffer alive while the user is still typing them.
     for (const auto& [input, ignored] : historicalCandidatesByInput_) {
-        (void)ignored;
-        if (startsWithInput(input)) {
-            return true;
-        }
-    }
-    for (const auto& [input, ignored] : loanwordCandidatesByInput_) {
         (void)ignored;
         if (startsWithInput(input)) {
             return true;
@@ -1220,25 +1207,6 @@ std::size_t MyanglishConverter::findRollingSplit(
     return bestExactRightSplit != 0
         ? bestExactRightSplit
         : bestPrefixOnlySplit;
-}
-
-bool MyanglishConverter::shouldAutoLockBeforeAppend(
-    const std::string& current,
-    char nextCharacter
-) const {
-    // Deprecated compatibility behavior: callers that still use this method
-    // receive the post-append rolling decision. The alpha-0.8.1 TSF path does
-    // not call it before appending anymore.
-    std::string combined = toLowerAscii(trim(current));
-    char next = nextCharacter;
-    if (next >= 'A' && next <= 'Z') {
-        next = static_cast<char>(next - 'A' + 'a');
-    }
-    if (next < 'a' || next > 'z') {
-        return false;
-    }
-    combined.push_back(next);
-    return findRollingSplit(combined) != 0;
 }
 
 std::string MyanglishConverter::convertSentence(const std::string& input) const {
