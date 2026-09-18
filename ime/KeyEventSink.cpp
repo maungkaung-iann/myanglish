@@ -29,9 +29,11 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyDown(ITfContext* pic, WPARAM wP
     *pfEaten = service_.shouldHandleKeyDown(pic, wParam) ? TRUE : FALSE;
     return S_OK;
 }
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
-    *pfEaten = FALSE;
+    // If CapsLock is released while Shift is still physically held, this is
+    // the key-up half of the IME's Shift+CapsLock shortcut.
+    *pfEaten = (wParam == VK_CAPITAL && (GetKeyState(VK_SHIFT) < 0)) ? TRUE : FALSE;
     return S_OK;
 }
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM, BOOL* pfEaten) {
@@ -52,9 +54,9 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
     *pfEaten = FALSE;
     return hr;
 }
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
-    *pfEaten = FALSE;
+    *pfEaten = (wParam == VK_CAPITAL && (GetKeyState(VK_SHIFT) < 0)) ? TRUE : FALSE;
     return S_OK;
 }
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnPreservedKey(ITfContext*, REFGUID, BOOL* pfEaten) {
