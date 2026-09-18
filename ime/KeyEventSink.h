@@ -31,6 +31,10 @@ public:
 private:
     TextService& service_;
     std::atomic<ULONG> refCount_{1};
+    // A Shift+CapsLock press belongs entirely to the IME mode switch.
+    // Keep its matching CapsLock key-up away from Windows so it cannot
+    // toggle the normal CapsLock state/LED.
+    bool suppressShiftCapsKeyUp_ = false;
 };
 
 } // namespace myanglish::ime
