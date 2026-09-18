@@ -223,6 +223,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prototype/main.cpp")
 endif()
 
 ###########################################################
+# Coverage audit tool
+###########################################################
+
+add_executable(MyanglishCoverageAudit
+    tools/CoverageAudit.cpp
+)
+
+target_link_libraries(MyanglishCoverageAudit
+    PRIVATE
+        MyanglishEngine
+)
+
+if(MSVC)
+    target_compile_options(MyanglishCoverageAudit PRIVATE /utf-8)
+endif()
+
+###########################################################
 # Tests
 ###########################################################
 
