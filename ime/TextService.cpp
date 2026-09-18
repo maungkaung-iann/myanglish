@@ -136,9 +136,9 @@ private:
 
 
 bool isModeToggle(WPARAM keyCode) {
-    // Switched behavior: Shift+CapsLock toggles Myanglish <-> English.
-    // Plain CapsLock is left to Windows for normal Capital Lock + LED.
-    return keyCode == VK_CAPITAL
+    // Shift+Space toggles Myanglish <-> English.
+    // CapsLock is reserved for normal Windows Capital Lock + LED behavior.
+    return keyCode == VK_SPACE
         && (GetKeyState(VK_SHIFT) < 0)
         && (GetKeyState(VK_CONTROL) >= 0)
         && (GetKeyState(VK_MENU) >= 0)
