@@ -26,12 +26,19 @@ ULONG STDMETHODCALLTYPE KeyEventSink::Release() {
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnSetFocus(BOOL fForeground) { return service_.onSetFocus(fForeground); }
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyDown(ITfContext* pic, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
+
+    // Latch the physical Shift+CapsLock chord while Shift is definitely down.
+    // The CapsLock key-up can arrive after Shift has already been released.
+    if (wParam == VK_CAPITAL && (GetKeyState(VK_SHIFT) < 0)) {
+        suppressShiftCapsKeyUp_ = true;
+    }
+
     *pfEaten = service_.shouldHandleKeyDown(pic, wParam) ? TRUE : FALSE;
     return S_OK;
 }
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnTestKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
-    *pfEaten = FALSE;
+    *pfEaten = (wParam == VK_CAPITAL && suppressShiftCapsKeyUp_) ? TRUE : FALSE;
     return S_OK;
 }
 HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM, BOOL* pfEaten) {
@@ -52,8 +59,15 @@ HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyDown(ITfContext* pic, WPARAM wParam
     *pfEaten = FALSE;
     return hr;
 }
-HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* pfEaten) {
+HRESULT STDMETHODCALLTYPE KeyEventSink::OnKeyUp(ITfContext*, WPARAM wParam, LPARAM, BOOL* pfEaten) {
     if (pfEaten == nullptr) return E_POINTER;
+
+    if (wParam == VK_CAPITAL && suppressShiftCapsKeyUp_) {
+        suppressShiftCapsKeyUp_ = false;
+        *pfEaten = TRUE;
+        return S_OK;
+    }
+
     *pfEaten = FALSE;
     return S_OK;
 }
