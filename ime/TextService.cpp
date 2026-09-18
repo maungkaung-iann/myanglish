@@ -801,7 +801,10 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         keyCode == VK_CAPITAL
         && (GetKeyState(VK_SHIFT) >= 0)
     ) {
-        return false;
+        // Latch the decision in OnTestKeyDown. OnKeyDown may observe the
+        // CapsLock state after Windows/JIS has already changed it.
+        plainCapsKeyPending_ = true;
+        return true;
     }
     if (isModeToggle(keyCode)) {
         return true;
@@ -816,7 +819,9 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
     }
 
     if (isAsciiLetter(keyCode)) {
-        return true;
+        // While plain CapsLock mode is active, Roman letters belong to Windows,
+        // not to Myanglish conversion. The host produces normal capital text.
+        return !plainCapsCapitalMode_;
     }
     if (isR111MyanmarDigitKey(keyCode)) {
         return true;
@@ -1080,9 +1085,38 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
 
     if (
         keyCode == VK_CAPITAL
-        && (GetKeyState(VK_SHIFT) >= 0)
+        && plainCapsKeyPending_
     ) {
-        return S_FALSE;
+        plainCapsKeyPending_ = false;
+
+        // Commit the word that was already being typed before changing the
+        // temporary plain-CapsLock typing state.
+        HRESULT capsCommit = S_FALSE;
+        if (conversionActive_ || candidateSelectionActive_) {
+            capsCommit = compositionManager_.commitCandidate(context, selectedCandidateIndex_);
+        } else if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
+            capsCommit = compositionManager_.commitOriginal(context);
+        }
+
+        candidateSelectionActive_ = false;
+        conversionActive_ = false;
+        selectedCandidateIndex_ = 0;
+        candidateWindow_.hide();
+        stackMode_ = false;
+        compositionManager_.setStackPrefixEnabled(false);
+
+        if (FAILED(capsCommit) && capsCommit != S_FALSE) {
+            debugLogHr("commit composition before plain CapsLock", capsCommit);
+        }
+
+        plainCapsCapitalMode_ = !plainCapsCapitalMode_;
+        debugLog(plainCapsCapitalMode_
+            ? "Plain CapsLock: English capital bypass ON"
+            : "Plain CapsLock: English capital bypass OFF");
+
+        // Eat this plain CapsLock inside TSF. The independent latch above is
+        // what controls Myanglish bypass; Shift+CapsLock is untouched.
+        return S_OK;
     }
 
     if (isShortcutModifierPressed()) {
