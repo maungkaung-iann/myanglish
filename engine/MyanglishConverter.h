@@ -40,10 +40,6 @@ public:
     // while the user is still reaching bank.
     std::size_t findRollingSplit(const std::string& combinedInput) const;
 
-    // Compatibility helper retained for older callers. Alpha-0.8.1 no longer
-    // performs pre-append locking in the TSF layer.
-    bool shouldAutoLockBeforeAppend(const std::string& current, char nextCharacter) const;
-
     bool isReady() const noexcept;
 
 private:
@@ -73,7 +69,6 @@ private:
     std::vector<std::string> toneMarkCodesByLength_;
     std::unordered_map<std::string, std::vector<MasterRhymeRule>> masterRhymeRulesByCode_;
     std::unordered_map<std::string, std::vector<Candidate>> historicalCandidatesByInput_;
-    std::unordered_map<std::string, std::vector<Candidate>> loanwordCandidatesByInput_;
     std::unordered_map<std::string, std::unordered_set<int>> suffixFamiliesByCode_;
     std::unordered_set<std::string> burmeseLexicon_;
 };
