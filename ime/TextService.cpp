@@ -136,10 +136,14 @@ private:
 
 
 bool isModeToggle(WPARAM keyCode) {
-    return keyCode == VK_SPACE
+    // Switched behavior: Shift+CapsLock toggles Myanglish <-> English.
+    // Plain CapsLock is left to Windows for normal Capital Lock + LED.
+    return keyCode == VK_CAPITAL
         && (GetKeyState(VK_SHIFT) < 0)
         && (GetKeyState(VK_CONTROL) >= 0)
-        && (GetKeyState(VK_MENU) >= 0);
+        && (GetKeyState(VK_MENU) >= 0)
+        && (GetKeyState(VK_LWIN) >= 0)
+        && (GetKeyState(VK_RWIN) >= 0);
 }
 
 bool translatedCharacterForKey(WPARAM keyCode, wchar_t& character) {
@@ -793,6 +797,12 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
     if (keyCode == VK_SHIFT || keyCode == VK_LSHIFT || keyCode == VK_RSHIFT) {
         return false;
     }
+    if (
+        keyCode == VK_CAPITAL
+        && (GetKeyState(VK_SHIFT) >= 0)
+    ) {
+        return false;
+    }
     if (isModeToggle(keyCode)) {
         return true;
     }
@@ -1066,6 +1076,13 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             compositionManager_.commitOriginalAndInsertLiteral(context, L' '),
             "Ctrl+Space commit raw word with smart boundary + trailing space"
         );
+    }
+
+    if (
+        keyCode == VK_CAPITAL
+        && (GetKeyState(VK_SHIFT) >= 0)
+    ) {
+        return S_FALSE;
     }
 
     if (isShortcutModifierPressed()) {
