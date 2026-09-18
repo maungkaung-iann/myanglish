@@ -44,9 +44,9 @@ std::vector<std::string> splitCsv(const std::string& line) {
 }
 
 std::string csvQuote(const std::string& s) {
-    std::string out = """;
+    std::string out(1, '"');
     for (char ch : s) {
-        if (ch == '"') out += """";
+        if (ch == '"') { out.push_back('"'); out.push_back('"'); }
         else out.push_back(ch);
     }
     out += '"';
