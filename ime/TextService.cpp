@@ -2,6 +2,7 @@
 
 #include "Guids.h"
 #include "KeyEventSink.h"
+#include "ThreadMgrEventSink.h"
 #include "LanguageBarButton.h"
 #include "PersonalDictionaryManager.h"
 
@@ -513,6 +514,34 @@ HRESULT TextService::activateInternal(ITfThreadMgr* threadMgr, TfClientId client
         return hr;
     }
 
+    // Track TSF document-manager focus separately from ITfKeyEventSink focus.
+    // Browsers can switch tabs without changing the top-level HWND, but TSF
+    // still moves focus to a different document manager.
+    threadMgrEventSink_ = new (std::nothrow) ThreadMgrEventSink(*this);
+    if (threadMgrEventSink_ != nullptr) {
+        HRESULT sourceHr = threadMgr_->QueryInterface(
+            IID_ITfSource,
+            reinterpret_cast<void**>(&threadMgrSource_)
+        );
+        if (SUCCEEDED(sourceHr) && threadMgrSource_ != nullptr) {
+            sourceHr = threadMgrSource_->AdviseSink(
+                IID_ITfThreadMgrEventSink,
+                static_cast<ITfThreadMgrEventSink*>(threadMgrEventSink_),
+                &threadMgrEventSinkCookie_
+            );
+        }
+        if (FAILED(sourceHr)) {
+            debugLogHr("AdviseSink(ITfThreadMgrEventSink)", sourceHr);
+            threadMgrEventSinkCookie_ = TF_INVALID_COOKIE;
+            if (threadMgrSource_ != nullptr) {
+                threadMgrSource_->Release();
+                threadMgrSource_ = nullptr;
+            }
+            threadMgrEventSink_->Release();
+            threadMgrEventSink_ = nullptr;
+        }
+    }
+
     // Alpha 0.10.8: add A / မြန် input-mode button to the Windows
     // language/taskbar input area.
     hr = threadMgr_->QueryInterface(
@@ -554,6 +583,24 @@ HRESULT TextService::deactivateInternal() {
     // dropping local state so it cannot leak into another application.
     (void)commitVisibleOnFocusLoss();
     releaseRememberedContext();
+
+    if (threadMgrSource_ != nullptr
+        && threadMgrEventSinkCookie_ != TF_INVALID_COOKIE) {
+        const HRESULT unadviseFocusResult =
+            threadMgrSource_->UnadviseSink(threadMgrEventSinkCookie_);
+        if (FAILED(unadviseFocusResult)) {
+            debugLogHr("UnadviseSink(ITfThreadMgrEventSink)", unadviseFocusResult);
+        }
+        threadMgrEventSinkCookie_ = TF_INVALID_COOKIE;
+    }
+    if (threadMgrEventSink_ != nullptr) {
+        threadMgrEventSink_->Release();
+        threadMgrEventSink_ = nullptr;
+    }
+    if (threadMgrSource_ != nullptr) {
+        threadMgrSource_->Release();
+        threadMgrSource_ = nullptr;
+    }
 
     if (keystrokeMgr_ != nullptr && clientId_ != TF_CLIENTID_NULL) {
         const HRESULT unadviseResult = keystrokeMgr_->UnadviseKeyEventSink(clientId_);
@@ -1780,6 +1827,25 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     return S_FALSE;
+}
+
+void TextService::onDocumentFocusChanged() noexcept {
+    if (!candidateWindow_.isVisible()
+        && !candidateSelectionActive_
+        && !conversionActive_) {
+        releaseRememberedContext();
+        return;
+    }
+
+    candidateWindow_.hide();
+    (void)commitVisibleOnFocusLoss();
+    candidateSelectionActive_ = false;
+    conversionActive_ = false;
+    selectedCandidateIndex_ = 0;
+    stackMode_ = false;
+    compositionManager_.setStackPrefixEnabled(false);
+    releaseRememberedContext();
+    debugLog("TSF document focus changed; popup and old candidate state cleared");
 }
 
 HRESULT TextService::onSetFocus(BOOL foreground) {
