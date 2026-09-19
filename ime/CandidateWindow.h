@@ -54,6 +54,7 @@ private:
     RECT textRect_{};
     bool hasTextRect_ = false;
     HWND foregroundRoot_ = nullptr;
+    HWND foregroundWindow_ = nullptr;
     bool foregroundLossPending_ = false;
     ForegroundLossCallback foregroundLossCallback_ = nullptr;
     ManageWordsCallback manageWordsCallback_ = nullptr;
