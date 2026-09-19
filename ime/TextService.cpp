@@ -1123,6 +1123,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         }
 
         plainCapsCapitalMode_ = !plainCapsCapitalMode_;
+        mixedCaseCapsWord_ = true;
         debugLog(plainCapsCapitalMode_
             ? "Plain CapsLock: English capital bypass ON"
             : "Plain CapsLock: English capital bypass OFF");
@@ -1596,6 +1597,26 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (keyCode == VK_SPACE) {
         if (!compositionManager_.hasBufferedText()) {
             return S_FALSE;
+        }
+
+        // A plain CapsLock toggle is a case change inside the same English word,
+        // not a word boundary. Example:
+        //   Caps ON G, OFF it, ON H, OFF ub, Space -> GitHub
+        // The capital chunks were already emitted by the host while Caps mode
+        // was active; commit the final lowercase raw tail directly beside them
+        // and consume this Space without inserting an automatic separator.
+        if (mixedCaseCapsWord_) {
+            candidateWindow_.hide();
+            candidateSelectionActive_ = false;
+            conversionActive_ = false;
+            selectedCandidateIndex_ = 0;
+            stackMode_ = false;
+            compositionManager_.setStackPrefixEnabled(false);
+            mixedCaseCapsWord_ = false;
+            return recover(
+                compositionManager_.commitOriginal(context),
+                "mixed-case CapsLock word Space: commit adjacent without auto-space"
+            );
         }
 
         const auto candidates = compositionManager_.currentCandidateTexts(9);
