@@ -216,6 +216,7 @@ bool CandidateWindow::show(
     }
 
     HWND foreground = GetForegroundWindow();
+    foregroundWindow_ = foreground;
     foregroundRoot_ = foreground != nullptr ? GetAncestor(foreground, GA_ROOT) : nullptr;
     if (foregroundRoot_ == nullptr) {
         foregroundRoot_ = foreground;
@@ -249,6 +250,7 @@ void CandidateWindow::hide() noexcept {
     selectedIndex_ = 0;
     hasTextRect_ = false;
     foregroundRoot_ = nullptr;
+    foregroundWindow_ = nullptr;
     hasLastCaretScreenRect_ = false;
     externalMouseDown_ = false;
 
@@ -606,8 +608,14 @@ LRESULT CALLBACK CandidateWindow::windowProc(HWND hwnd, UINT message, WPARAM wPa
                 currentRoot = foreground;
             }
 
-            if (self->foregroundRoot_ != nullptr
-                && currentRoot != self->foregroundRoot_) {
+            // A browser tab switch often keeps the same top-level browser
+            // window, so root-window comparison alone cannot detect it.
+            // When the focused child/renderer window changes, treat that as
+            // leaving the editor that owns this candidate popup as well.
+            if ((self->foregroundRoot_ != nullptr
+                    && currentRoot != self->foregroundRoot_)
+                || (self->foregroundWindow_ != nullptr
+                    && foreground != self->foregroundWindow_)) {
                 debugLog(
                     "CandidateWindow: foreground window changed; "
                     "commit selected candidate and close popup"
