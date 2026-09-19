@@ -44,6 +44,7 @@ public:
     // remove that Space and reopen the raw word as the active composition.
     HRESULT undoRawAutoSpaceAndResume(ITfContext* context);
     bool hasPendingRawAutoSpace() const noexcept;
+    void cancelPendingRawAutoSpace() noexcept;
     HRESULT previewCandidate(ITfContext* context, std::size_t candidateIndex);
     HRESULT restoreOriginalPreview(ITfContext* context);
     HRESULT toggleRawWord(ITfContext* context);
