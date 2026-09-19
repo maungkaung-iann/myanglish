@@ -70,6 +70,7 @@ if(WIN32)
         ime/PersonalDictionaryManager.cpp
         ime/Registration.cpp
         ime/TextService.cpp
+        ime/ThreadMgrEventSink.cpp
         ime/MyanglishIME.def
     )
 
