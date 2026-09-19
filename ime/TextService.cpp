@@ -810,6 +810,13 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcep
         return true;
     }
 
+    // Smart undo-space: after a raw word was committed with the IME-added
+    // trailing Space, the immediately following Backspace belongs to the IME
+    // even though there is no active composition at this instant.
+    if (keyCode == VK_BACK && compositionManager_.hasPendingRawAutoSpace()) {
+        return true;
+    }
+
     if (candidateWindow_.isVisible()) {
         if (keyCode == VK_SPACE || keyCode == VK_RETURN || keyCode == VK_ESCAPE
             || keyCode == VK_BACK || isR111ArrowKey(keyCode)
@@ -1375,6 +1382,20 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     }
 
     if (keyCode == VK_BACK) {
+        if (compositionManager_.hasPendingRawAutoSpace()
+            && !conversionActive_ && !candidateSelectionActive_
+            && !compositionManager_.hasBufferedText()) {
+            candidateWindow_.hide();
+            selectedCandidateIndex_ = 0;
+            stackMode_ = false;
+            compositionManager_.setStackPrefixEnabled(false);
+            const HRESULT hr = compositionManager_.undoRawAutoSpaceAndResume(context);
+            if (SUCCEEDED(hr)) {
+                refreshCandidateWindow();
+            }
+            return recover(hr, "smart undo auto-space and resume raw composition");
+        }
+
         if (conversionActive_ || candidateSelectionActive_) {
             candidateSelectionActive_ = false;
             conversionActive_ = false;
