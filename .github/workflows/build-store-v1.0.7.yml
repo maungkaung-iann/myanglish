@@ -1,0 +1,87 @@
+name: Build v1.0.7 certification test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/store-v1.0.7-certification
+    paths:
+      - CMakeLists.txt
+      - engine/**
+      - ime/**
+      - installer/**
+      - settings/**
+      - data/**
+      - packaging/store/**
+      - .github/workflows/build-store-v1.0.7.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure x64 Release
+        run: cmake -S . -B build-v107 -A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      - name: Build certification binaries
+        run: cmake --build build-v107 --config Release --target MyanglishIME MyanglishSettings MyanglishSetup
+
+      - name: Run tests
+        run: ctest --test-dir build-v107 -C Release --output-on-failure
+
+      - name: Assemble offline certification test package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $package = Join-Path $PWD "Myanglish-v1.0.7-certification-test"
+          New-Item -ItemType Directory -Force $package | Out-Null
+
+          Copy-Item "build-v107/Release/MyanglishIME.dll" $package -Force
+          Copy-Item "build-v107/Release/MyanglishSettings.exe" $package -Force
+          Copy-Item "build-v107/Release/MyanglishSetup.exe" $package -Force
+
+          $builtData = "build-v107/Release/data"
+          if (Test-Path $builtData) {
+            Copy-Item $builtData (Join-Path $package "data") -Recurse -Force
+          } else {
+            Copy-Item "data" (Join-Path $package "data") -Recurse -Force
+          }
+
+          @"
+          Myanglish v1.0.7 Certification Test
+          -----------------------------------
+          TEST BUILD ONLY - do not submit to Microsoft Store yet.
+
+          Fixes under test:
+          - Fail installation when EnableLanguageProfile fails.
+          - Register GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT.
+          - Call InstallLayoutOrTip during DllRegisterServer.
+          - Remove the TIP with ILOT_UNINSTALL during unregister.
+
+          Test:
+          1. Run MyanglishSetup.exe as administrator.
+          2. Install Myanglish.
+          3. Press Win + Space.
+          4. Confirm Myanglish is listed and can be selected.
+          5. Open Notepad and confirm the IME accepts input.
+
+          If installation fails, inspect:
+          %LOCALAPPDATA%\MyanglishIME\setup.log
+          "@ | Set-Content (Join-Path $package "README_TEST.txt") -Encoding UTF8
+
+          Get-FileHash (Join-Path $package "MyanglishIME.dll") -Algorithm SHA256 |
+            Format-List | Out-File (Join-Path $package "SHA256.txt") -Encoding utf8
+
+      - name: Upload certification test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Myanglish-v1.0.7-certification-test
+          path: Myanglish-v1.0.7-certification-test/**
+          if-no-files-found: error
+          retention-days: 30
