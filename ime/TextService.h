@@ -34,7 +34,7 @@ public:
     HRESULT STDMETHODCALLTYPE EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo** enumInfo) override;
     HRESULT STDMETHODCALLTYPE GetDisplayAttributeInfo(REFGUID guid, ITfDisplayAttributeInfo** info) override;
 
-    bool shouldHandleKeyDown(ITfContext* context, WPARAM keyCode) const noexcept;
+    bool shouldHandleKeyDown(ITfContext* context, WPARAM keyCode) noexcept;
     HRESULT processKeyDown(ITfContext* context, WPARAM keyCode);
     HRESULT onSetFocus(BOOL foreground);
     bool isMyanglishModeEnabled() const noexcept { return enabled_; }
