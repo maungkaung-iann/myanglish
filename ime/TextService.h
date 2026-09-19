@@ -76,6 +76,10 @@ private:
     // Shift+CapsLock remains the R1.14 persistent language-mode shortcut.
     mutable bool plainCapsCapitalMode_ = false;
     mutable bool plainCapsKeyPending_ = false;
+    // True while plain CapsLock toggles are being used to build one mixed-case
+    // English token (for example GitHub). The next Space commits the lowercase
+    // tail adjacent to the capital host text without inserting an IME space.
+    bool mixedCaseCapsWord_ = false;
     bool liveCandidatesEnabled_ = true;
     bool candidateSelectionActive_ = false;
     bool conversionActive_ = false;
