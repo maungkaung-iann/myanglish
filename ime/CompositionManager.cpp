@@ -966,7 +966,132 @@ HRESULT CompositionManager::executeEdit(
         return E_POINTER;
     }
 
+    // A remembered raw auto-space is valid for exactly the next IME edit.
+    // Only the dedicated undo action is allowed to consume it.
+    if (action != EditAction::UndoRawAutoSpaceAndResume
+        && action != EditAction::FinalizeIfSelectionMoved) {
+        pendingRawAutoSpace_.clear();
+    }
+
     switch (action) {
+    case EditAction::UndoRawAutoSpaceAndResume: {
+        if (pendingRawAutoSpace_.empty() || composition_ != nullptr || !buffer_.empty()) {
+            pendingRawAutoSpace_.clear();
+            return S_FALSE;
+        }
+
+        const std::string raw = pendingRawAutoSpace_;
+        pendingRawAutoSpace_.clear();
+        const std::wstring rawWide = utf8ToUtf16(raw);
+        if (rawWide.empty()) {
+            return S_FALSE;
+        }
+
+        TF_SELECTION selection{};
+        ULONG fetched = 0;
+        HRESULT result = context->GetSelection(
+            editCookie, TF_DEFAULT_SELECTION, 1, &selection, &fetched
+        );
+        if (FAILED(result) || fetched != 1 || selection.range == nullptr) {
+            if (selection.range != nullptr) selection.range->Release();
+            return FAILED(result) ? result : S_FALSE;
+        }
+
+        // Resume only at a collapsed caret immediately after exactly
+        // "<remembered raw><ASCII space>".  This prevents Backspace after a
+        // caret move or unrelated edit from reopening the wrong word.
+        LONG selectionWidth = 0;
+        result = selection.range->CompareStart(
+            editCookie, selection.range, TF_ANCHOR_END, &selectionWidth
+        );
+        if (FAILED(result) || selectionWidth != 0) {
+            selection.range->Release();
+            return S_FALSE;
+        }
+
+        ITfRange* previous = nullptr;
+        result = selection.range->Clone(&previous);
+        selection.range->Release();
+        if (FAILED(result) || previous == nullptr) {
+            if (previous != nullptr) previous->Release();
+            return FAILED(result) ? result : S_FALSE;
+        }
+
+        const LONG wanted = static_cast<LONG>(rawWide.size() + 1);
+        LONG shifted = 0;
+        result = previous->ShiftStart(editCookie, -wanted, &shifted, nullptr);
+        if (FAILED(result) || shifted != -wanted) {
+            previous->Release();
+            return S_FALSE;
+        }
+
+        std::wstring expected = rawWide + L" ";
+        std::wstring actual(expected.size(), L'\0');
+        ULONG actualLength = 0;
+        result = previous->GetText(
+            editCookie, 0, actual.data(),
+            static_cast<ULONG>(actual.size()), &actualLength
+        );
+        if (FAILED(result)
+            || actualLength != expected.size()
+            || actual.compare(0, actualLength, expected) != 0) {
+            previous->Release();
+            return S_FALSE;
+        }
+
+        // Select the committed raw+space, replace it with the raw word, then
+        // start a TSF composition over that exact word.
+        TF_SELECTION reopenSelection{};
+        reopenSelection.range = previous;
+        reopenSelection.style.ase = TF_AE_NONE;
+        reopenSelection.style.fInterimChar = FALSE;
+        result = context->SetSelection(editCookie, 1, &reopenSelection);
+        if (FAILED(result)) {
+            previous->Release();
+            return result;
+        }
+
+        result = previous->SetText(
+            editCookie, 0, rawWide.c_str(), static_cast<LONG>(rawWide.size())
+        );
+        if (FAILED(result)) {
+            previous->Release();
+            return result;
+        }
+
+        // Keep the replacement selected so StartComposition adopts the word
+        // instead of opening an empty composition after it.
+        reopenSelection.range = previous;
+        result = context->SetSelection(editCookie, 1, &reopenSelection);
+        previous->Release();
+        if (FAILED(result)) {
+            return result;
+        }
+
+        result = ensureComposition(editCookie, context);
+        if (FAILED(result)) {
+            return result;
+        }
+
+        buffer_ = raw;
+        rawPreview_ = true;
+        stackPrefixEnabled_ = false;
+        stackJoinPrefix_.clear();
+        kinziPending_ = false;
+
+        ITfRange* compositionRange = nullptr;
+        result = composition_->GetRange(&compositionRange);
+        if (SUCCEEDED(result) && compositionRange != nullptr) {
+            (void)placeCaretAtCompositionEnd(editCookie, context, compositionRange);
+            const bool candidateAvailable = !currentCandidateTexts(1).empty();
+            (void)applyCandidateIndicator(editCookie, context, candidateAvailable);
+            compositionRange->Release();
+        }
+
+        debugLog("Smart undo-space reopened previous raw word as composition");
+        return S_OK;
+    }
+
     case EditAction::InsertCharacter: {
         const bool asciiLetter =
             (character >= L'A' && character <= L'Z')
@@ -2386,6 +2511,9 @@ HRESULT CompositionManager::executeEdit(
             endComposition(editCookie);
 
         if (SUCCEEDED(endResult)) {
+            // Remember only raw commits whose trailing literal is the IME's
+            // auto-added ASCII Space. The next Backspace may reopen this word.
+            pendingRawAutoSpace_ = (character == L' ') ? buffer_ : std::string{};
             lastPreviewCandidate_.clear();
             buffer_.clear();
             rawPreview_ = false;
