@@ -773,7 +773,13 @@ HRESULT TextService::toggleModeFromLanguageBar() noexcept {
     return S_OK;
 }
 
-bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) const noexcept {
+bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) noexcept {
+    // The resume window is exactly one physical key. Any key other than the
+    // immediate Backspace expires it, including keys that the IME passes through
+    // to the host (arrows, punctuation, shortcuts, etc.).
+    if (keyCode != VK_BACK && compositionManager_.hasPendingRawAutoSpace()) {
+        compositionManager_.cancelPendingRawAutoSpace();
+    }
     if (isStackCommitShortcut(keyCode)) {
         const bool handle = enabled_ && compositionManager_.hasBufferedText();
         stackShortcutPending_ = handle;
