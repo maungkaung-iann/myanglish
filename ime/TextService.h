@@ -15,6 +15,7 @@ namespace myanglish::ime {
 
 class KeyEventSink;
 class LanguageBarButton;
+class ThreadMgrEventSink;
 
 class TextService final : public ITfTextInputProcessorEx, public ITfDisplayAttributeProvider {
 public:
@@ -37,6 +38,7 @@ public:
     bool shouldHandleKeyDown(ITfContext* context, WPARAM keyCode) noexcept;
     HRESULT processKeyDown(ITfContext* context, WPARAM keyCode);
     HRESULT onSetFocus(BOOL foreground);
+    void onDocumentFocusChanged() noexcept;
     bool isMyanglishModeEnabled() const noexcept { return enabled_; }
     HRESULT toggleModeFromLanguageBar() noexcept;
 
@@ -68,6 +70,8 @@ private:
     ITfThreadMgr* threadMgr_ = nullptr;
     ITfKeystrokeMgr* keystrokeMgr_ = nullptr;
     ITfLangBarItemMgr* languageBarItemMgr_ = nullptr;
+    ITfSource* threadMgrSource_ = nullptr;
+    DWORD threadMgrEventSinkCookie_ = TF_INVALID_COOKIE;
     ITfContext* lastContext_ = nullptr;
     TfClientId clientId_ = TF_CLIENTID_NULL;
     bool active_ = false;
@@ -90,6 +94,7 @@ private:
     CompositionManager compositionManager_;
     CandidateWindow candidateWindow_;
     KeyEventSink* keyEventSink_ = nullptr;
+    ThreadMgrEventSink* threadMgrEventSink_ = nullptr;
     LanguageBarButton* languageBarButton_ = nullptr;
 };
 
