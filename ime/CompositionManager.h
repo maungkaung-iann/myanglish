@@ -40,6 +40,10 @@ public:
 
     HRESULT insertCharacter(ITfContext* context, wchar_t character);
     HRESULT deleteBackspace(ITfContext* context);
+    // If the immediately preceding raw commit ended with an IME-added Space,
+    // remove that Space and reopen the raw word as the active composition.
+    HRESULT undoRawAutoSpaceAndResume(ITfContext* context);
+    bool hasPendingRawAutoSpace() const noexcept;
     HRESULT previewCandidate(ITfContext* context, std::size_t candidateIndex);
     HRESULT restoreOriginalPreview(ITfContext* context);
     HRESULT toggleRawWord(ITfContext* context);
@@ -88,6 +92,7 @@ public:
     enum class EditAction {
         InsertCharacter,
         DeleteBackspace,
+        UndoRawAutoSpaceAndResume,
         PreviewCandidate,
         RestoreOriginalPreview,
         ToggleRawWord,
@@ -155,6 +160,9 @@ public:
     std::unordered_map<std::string, std::unordered_map<std::wstring, UserChoiceStats>> userHistory_;
     std::wstring lastPreviewCandidate_;
     std::string buffer_;
+    // Raw word remembered only across the immediately following keystroke.
+    // Used for: feat + Space + Backspace + ure -> feature.
+    std::string pendingRawAutoSpace_;
     bool rawPreview_ = false;
     bool stackPrefixEnabled_ = false;
     // Full Burmese prefix that remains inside the SAME composition while
