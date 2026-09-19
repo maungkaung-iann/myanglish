@@ -555,6 +555,25 @@ HRESULT CompositionManager::deleteBackspace(
     );
 }
 
+HRESULT CompositionManager::undoRawAutoSpaceAndResume(
+    ITfContext* context
+) {
+    return requestEdit(
+        context,
+        EditAction::UndoRawAutoSpaceAndResume
+    );
+}
+
+bool CompositionManager::hasPendingRawAutoSpace() const noexcept {
+    return !pendingRawAutoSpace_.empty()
+        && buffer_.empty()
+        && composition_ == nullptr;
+}
+
+void CompositionManager::cancelPendingRawAutoSpace() noexcept {
+    pendingRawAutoSpace_.clear();
+}
+
 HRESULT CompositionManager::previewCandidate(
     ITfContext* context,
     std::size_t candidateIndex
