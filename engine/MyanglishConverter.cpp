@@ -935,6 +935,12 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         return {};
     }
 
+    // User-requested raw-English-only words. Do not expose dictionary,
+    // imported lexicon, or generated Burmese conversion candidates.
+    if (normalizedInput == "but" || normalizedInput == "or") {
+        return {};
+    }
+
     // Lexicon Pack 2: uppercase T is a deliberate shortcut.
     // TextService preserves uppercase T only when Shift+T starts a fresh word.
     if (trimmedInput == "T") {
