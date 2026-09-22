@@ -12,6 +12,7 @@ constexpr wchar_t kWindowClass[] = L"MyanglishSetupWindow";
 constexpr int kInstallButtonId = 1001;
 constexpr int kUninstallButtonId = 1002;
 constexpr wchar_t kProductDirectory[] = L"Myanglish";
+constexpr wchar_t kInstallVersion[] = L"1.0.8";
 
 std::filesystem::path modulePath() {
     wchar_t path[32768]{};
@@ -39,7 +40,10 @@ std::filesystem::path installDirectory() {
         return {};
     }
 
-    return std::filesystem::path(std::wstring(path, len)) / kProductDirectory;
+    return std::filesystem::path(std::wstring(path, len))
+        / kProductDirectory
+        / L"versions"
+        / kInstallVersion;
 }
 
 std::filesystem::path setupLogPath() {
