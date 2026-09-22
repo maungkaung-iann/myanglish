@@ -258,9 +258,16 @@ HRESULT uninstallMyanglish() {
         return hr;
     }
 
-    // Installed files can still be mapped briefly by text-input processes.
-    // Remove them from a temporary helper after this Setup process exits.
-    const auto destination = installDirectory();
+    // Remove the whole Myanglish installation tree after Setup exits.
+    // This includes older version directories left behind by safe upgrades.
+    const auto versionDirectory = installDirectory();
+    const auto versionsDirectory = versionDirectory.parent_path();
+    const auto destination = versionsDirectory.parent_path();
+
+    if (destination.empty() || destination.filename() != kProductDirectory) {
+        return E_FAIL;
+    }
+
     hr = startDeferredCleanup(destination);
     logSetupAction("Uninstall.ScheduleCleanup", hr);
     return hr;
@@ -289,19 +296,68 @@ int runCleanupHelper(DWORD parentPid, const std::filesystem::path& destination) 
         Sleep(500);
     }
 
-    const HRESULT hr = removed ? S_OK : HRESULT_FROM_WIN32(ec.value());
+    HRESULT hr = removed ? S_OK : HRESULT_FROM_WIN32(ec.value());
+
+    // Do not force-close the user's applications. If an old IME DLL is still
+    // mapped, schedule the remaining installation files for deletion at reboot.
+    if (!removed) {
+        std::error_code walkEc;
+        std::vector<std::filesystem::path> directories;
+
+        if (std::filesystem::exists(destination, walkEc) && !walkEc) {
+            for (std::filesystem::recursive_directory_iterator it(
+                     destination,
+                     std::filesystem::directory_options::skip_permission_denied,
+                     walkEc),
+                 end;
+                 it != end;
+                 it.increment(walkEc)) {
+                if (walkEc) {
+                    walkEc.clear();
+                    continue;
+                }
+
+                walkEc.clear();
+                if (it->is_directory(walkEc) && !walkEc) {
+                    directories.push_back(it->path());
+                } else if (!walkEc) {
+                    MoveFileExW(
+                        it->path().c_str(),
+                        nullptr,
+                        MOVEFILE_DELAY_UNTIL_REBOOT
+                    );
+                }
+            }
+
+            for (auto it = directories.rbegin(); it != directories.rend(); ++it) {
+                MoveFileExW(
+                    it->c_str(),
+                    nullptr,
+                    MOVEFILE_DELAY_UNTIL_REBOOT
+                );
+            }
+
+            MoveFileExW(
+                destination.c_str(),
+                nullptr,
+                MOVEFILE_DELAY_UNTIL_REBOOT
+            );
+
+            hr = S_OK;
+            logSetupAction("Uninstall.RebootCleanupScheduled", S_OK);
+        }
+    }
+
     logSetupAction("Uninstall.DeferredCleanup", hr);
 
-    // The helper cannot delete its own executable while running. Ask Windows
-    // to remove this temporary helper on the next reboot.
+    // The helper cannot delete its own executable while running.
     const auto self = modulePath();
     if (!self.empty()) {
         MoveFileExW(self.c_str(), nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
     }
 
-    return removed ? 0 : 1;
+    return SUCCEEDED(hr) ? 0 : 1;
 }
-
 HRESULT performSetupAction(bool uninstall) {
     return uninstall ? uninstallMyanglish() : installMyanglish();
 }
