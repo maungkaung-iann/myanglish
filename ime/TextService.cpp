@@ -1277,11 +1277,19 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             }
             return S_FALSE;
         }
-        if (isCandidateNumberKey(keyCode)) {
-            return recover(
-                commitCandidateByNumber(context, static_cast<std::size_t>(keyCode - '1')),
-                "number auto-commit candidate"
-            );
+        if (isR111MyanmarDigitKey(keyCode)) {
+            const wchar_t digit = myanmarDigitForKey(keyCode);
+            const bool rawCandidate = compositionManager_.isRawCandidate(selectedCandidateIndex_);
+            candidateWindow_.hide();
+            candidateSelectionActive_ = false;
+            conversionActive_ = false;
+            selectedCandidateIndex_ = 0;
+            stackMode_ = false;
+            compositionManager_.setStackPrefixEnabled(false);
+            const HRESULT hr = rawCandidate
+                ? compositionManager_.commitOriginalAndInsertLiteral(context, digit)
+                : compositionManager_.commitVisiblePreviewAndInsertLiteral(context, digit);
+            return recover(hr, "commit visible candidate and Myanmar digit");
         }
         if (keyCode == VK_ESCAPE || keyCode == VK_BACK) {
             // Romaji-style cancel: while converted, Esc or Backspace cancels the
