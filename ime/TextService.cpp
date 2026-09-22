@@ -1149,14 +1149,11 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     ) {
         plainCapsKeyPending_ = false;
 
-        // CapsLock changes case inside the same English token. Do not treat
-        // the toggle itself as a word boundary. In particular, when leaving
-        // lowercase Myanglish composition for a capital host letter, commit the
-        // raw tail without adding a separator; when returning to lowercase, the
-        // next raw composition starts immediately after that capital text.
+        // Commit the word that was already being typed before changing the
+        // temporary plain-CapsLock typing state.
         HRESULT capsCommit = S_FALSE;
         if (conversionActive_ || candidateSelectionActive_) {
-            capsCommit = compositionManager_.commitOriginal(context);
+            capsCommit = compositionManager_.commitCandidate(context, selectedCandidateIndex_);
         } else if (compositionManager_.hasBufferedText() || compositionManager_.hasActiveComposition()) {
             capsCommit = compositionManager_.commitOriginal(context);
         }
@@ -1169,11 +1166,10 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         compositionManager_.setStackPrefixEnabled(false);
 
         if (FAILED(capsCommit) && capsCommit != S_FALSE) {
-            debugLogHr("commit raw composition before plain CapsLock", capsCommit);
+            debugLogHr("commit composition before plain CapsLock", capsCommit);
         }
 
         plainCapsCapitalMode_ = !plainCapsCapitalMode_;
-        mixedCaseCapsWord_ = true;
         debugLog(plainCapsCapitalMode_
             ? "Plain CapsLock: English capital bypass ON"
             : "Plain CapsLock: English capital bypass OFF");
