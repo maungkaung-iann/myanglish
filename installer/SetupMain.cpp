@@ -1,8 +1,9 @@
-#include <Windows.h>
+﻿#include <Windows.h>
 #include <Shellapi.h>
 #include "Resource.h"
 
 #include <filesystem>
+#include <cstring>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@ constexpr wchar_t kWindowClass[] = L"MyanglishSetupWindow";
 constexpr int kInstallButtonId = 1001;
 constexpr int kUninstallButtonId = 1002;
 constexpr wchar_t kProductDirectory[] = L"Myanglish";
-constexpr wchar_t kInstallVersion[] = L"1.0.9";
+constexpr wchar_t kInstallVersion[] = L"1.0.10";
 
 std::filesystem::path modulePath() {
     wchar_t path[32768]{};
@@ -96,6 +97,7 @@ HRESULT writeResourceToFile(
     }
 
     HGLOBAL loaded = LoadResource(nullptr, resource);
+
     if (loaded == nullptr) {
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -107,7 +109,97 @@ HRESULT writeResourceToFile(
         return E_FAIL;
     }
 
+    /*
+        Same-version reinstall fix.
+
+        If the destination file already exists and contains
+        exactly the same bytes as the embedded installer file,
+        leave it alone.
+
+        This is important for MyanglishIME.dll because Explorer,
+        Chrome, Edge, and other TSF clients may currently have
+        the DLL loaded.
+    */
+    {
+        std::error_code existsError;
+
+        if (std::filesystem::exists(destination, existsError) &&
+            !existsError) {
+
+            std::error_code sizeError;
+            const auto existingSize =
+                std::filesystem::file_size(destination, sizeError);
+
+            if (!sizeError &&
+                existingSize == static_cast<std::uintmax_t>(size)) {
+
+                std::ifstream existing(
+                    destination,
+                    std::ios::binary
+                );
+
+                if (existing.is_open()) {
+                    constexpr std::size_t kBufferSize = 64 * 1024;
+
+                    std::vector<char> buffer(kBufferSize);
+
+                    const auto* resourceBytes =
+                        static_cast<const unsigned char*>(data);
+
+                    std::uintmax_t offset = 0;
+                    bool identical = true;
+
+                    while (
+                        identical &&
+                        offset < static_cast<std::uintmax_t>(size)
+                    ) {
+                        const std::uintmax_t remaining =
+                            static_cast<std::uintmax_t>(size) - offset;
+
+                        const std::size_t chunk =
+                            static_cast<std::size_t>(
+                                (remaining < kBufferSize)
+                                    ? remaining
+                                    : kBufferSize
+                            );
+
+                        existing.read(
+                            buffer.data(),
+                            static_cast<std::streamsize>(chunk)
+                        );
+
+                        if (
+                            existing.gcount() !=
+                            static_cast<std::streamsize>(chunk)
+                        ) {
+                            identical = false;
+                            break;
+                        }
+
+                        if (
+                            std::memcmp(
+                                buffer.data(),
+                                resourceBytes + offset,
+                                chunk
+                            ) != 0
+                        ) {
+                            identical = false;
+                            break;
+                        }
+
+                        offset += chunk;
+                    }
+
+                    if (identical) {
+                        return S_OK;
+                    }
+                }
+            }
+        }
+    }
+
     std::error_code ec;
+
     std::filesystem::create_directories(
         destination.parent_path(),
         ec
@@ -123,7 +215,9 @@ HRESULT writeResourceToFile(
     );
 
     if (!file.is_open()) {
-        return E_FAIL;
+        return HRESULT_FROM_WIN32(
+            ERROR_SHARING_VIOLATION
+        );
     }
 
     file.write(
@@ -137,7 +231,6 @@ HRESULT writeResourceToFile(
 
     return S_OK;
 }
-
 struct EmbeddedFile {
     int resourceId;
     const wchar_t* relativePath;
@@ -613,3 +706,4 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR commandLine, int showCo
 
     return runInteractive(instance, showCommand);
 }
+
