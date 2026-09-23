@@ -50,7 +50,7 @@ std::filesystem::path extractDirectory() {
 }
 
 std::filesystem::path setupPath() {
-    return extractDirectory() / L"MyanglishSetup.exe";
+    return extractDirectory() / L"MyanglishInstaller.exe";
 }
 
 std::wstring downloadUrl() {

@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <Shellapi.h>
+#include "Resource.h"
 
 #include <filesystem>
 #include <fstream>
@@ -12,7 +13,7 @@ constexpr wchar_t kWindowClass[] = L"MyanglishSetupWindow";
 constexpr int kInstallButtonId = 1001;
 constexpr int kUninstallButtonId = 1002;
 constexpr wchar_t kProductDirectory[] = L"Myanglish";
-constexpr wchar_t kInstallVersion[] = L"1.0.8";
+constexpr wchar_t kInstallVersion[] = L"1.0.9";
 
 std::filesystem::path modulePath() {
     wchar_t path[32768]{};
@@ -80,58 +81,127 @@ void logSetupAction(const char* action, HRESULT hr) {
     }
 }
 
-HRESULT copyPayloadToInstallDirectory() {
-    const auto source = moduleDirectory();
-    const auto destination = installDirectory();
+HRESULT writeResourceToFile(
+    int resourceId,
+    const std::filesystem::path& destination
+) {
+    HRSRC resource = FindResourceW(
+        nullptr,
+        MAKEINTRESOURCEW(resourceId),
+        RT_RCDATA
+    );
 
-    if (source.empty() || destination.empty()) {
+    if (resource == nullptr) {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    HGLOBAL loaded = LoadResource(nullptr, resource);
+    if (loaded == nullptr) {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    const DWORD size = SizeofResource(nullptr, resource);
+    const void* data = LockResource(loaded);
+
+    if (data == nullptr || size == 0) {
         return E_FAIL;
     }
 
     std::error_code ec;
-    std::filesystem::create_directories(destination, ec);
+    std::filesystem::create_directories(
+        destination.parent_path(),
+        ec
+    );
+
     if (ec) {
         return HRESULT_FROM_WIN32(ec.value());
     }
 
-    for (const auto& entry : std::filesystem::directory_iterator(source, ec)) {
-        if (ec) {
-            return HRESULT_FROM_WIN32(ec.value());
-        }
+    std::ofstream file(
+        destination,
+        std::ios::binary | std::ios::trunc
+    );
 
-        const auto target = destination / entry.path().filename();
-        ec.clear();
-
-        if (entry.is_directory()) {
-            std::filesystem::copy(
-                entry.path(),
-                target,
-                std::filesystem::copy_options::recursive |
-                    std::filesystem::copy_options::overwrite_existing,
-                ec
-            );
-        } else if (entry.is_regular_file()) {
-            std::filesystem::copy_file(
-                entry.path(),
-                target,
-                std::filesystem::copy_options::overwrite_existing,
-                ec
-            );
-        }
-
-        if (ec) {
-            return HRESULT_FROM_WIN32(ec.value());
-        }
+    if (!file.is_open()) {
+        return E_FAIL;
     }
 
-    const auto dllPath = destination / L"MyanglishIME.dll";
-    if (!std::filesystem::exists(dllPath, ec) || ec) {
-        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    file.write(
+        static_cast<const char*>(data),
+        static_cast<std::streamsize>(size)
+    );
+
+    if (!file.good()) {
+        return E_FAIL;
     }
 
     return S_OK;
 }
 
+struct EmbeddedFile {
+    int resourceId;
+    const wchar_t* relativePath;
+};
+
+HRESULT copyPayloadToInstallDirectory() {
+    const auto destination = installDirectory();
+
+    if (destination.empty()) {
+        return E_FAIL;
+    }
+
+    const EmbeddedFile files[] = {
+        { IDR_MYANGLISH_IME, L"MyanglishIME.dll" },
+        { IDR_MYANGLISH_SETTINGS, L"MyanglishSettings.exe" },
+
+        { IDR_DATA_1000, L"data\\alpha08_candidates.csv" },
+        { IDR_DATA_1001, L"data\\dictionary.csv" },
+        { IDR_DATA_1002, L"data\\historical_candidates.csv" },
+        { IDR_DATA_1003, L"data\\imported_lexicon_alpha1083_pack1.csv" },
+        { IDR_DATA_1004, L"data\\imported_lexicon_alpha1083_pack2.csv" },
+
+        { IDR_DATA_1005, L"data\\lexicon\\burmese_lexicon.txt" },
+        { IDR_DATA_1006, L"data\\lexicon\\README.md" },
+
+        { IDR_DATA_1007, L"data\\myanglish_rules\\ranked_suffixes_alpha07.csv" },
+        { IDR_DATA_1008, L"data\\myanglish_rules\\ranked_suffixes_alpha08.csv" },
+        { IDR_DATA_1009, L"data\\myanglish_rules\\rhymes_master_v1.csv" },
+        { IDR_DATA_1010, L"data\\myanglish_rules\\suffix_families_alpha08.csv" },
+
+        { IDR_DATA_1011, L"data\\ranked_candidates_alpha0109.csv" },
+
+        { IDR_DATA_1012, L"data\\rules\\finals.csv" },
+        { IDR_DATA_1013, L"data\\rules\\marks.csv" },
+        { IDR_DATA_1014, L"data\\rules\\medials.csv" },
+        { IDR_DATA_1015, L"data\\rules\\rhymes.csv" },
+        { IDR_DATA_1016, L"data\\rules\\tone_marks.csv" },
+
+        { IDR_DATA_1017, L"data\\user_dictionary.example.csv" },
+        { IDR_DATA_1018, L"data\\vowel.csv" }
+    };
+
+    for (const auto& file : files) {
+        const HRESULT hr = writeResourceToFile(
+            file.resourceId,
+            destination / file.relativePath
+        );
+
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
+    const auto installedDll = destination / L"MyanglishIME.dll";
+
+    std::error_code ec;
+    if (!std::filesystem::exists(installedDll, ec) || ec) {
+        return HRESULT_FROM_WIN32(
+            ec ? ec.value() : ERROR_FILE_NOT_FOUND
+        );
+    }
+
+    return S_OK;
+}
 HRESULT callRegistrationExportForDll(const std::filesystem::path& dllPath, bool uninstall) {
     HMODULE module = LoadLibraryW(dllPath.c_str());
     if (module == nullptr) {
