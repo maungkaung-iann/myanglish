@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myanglish IME</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Myanmar Text", Arial, sans-serif;
+            background: #ffffff;
+            color: #111827;
+        }
+
+        nav {
+            max-width: 1100px;
+            margin: auto;
+            padding: 22px 28px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .version {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .hero {
+            min-height: 620px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px;
+        }
+
+        .hero-inner {
+            max-width: 760px;
+        }
+
+        h1 {
+            font-size: clamp(52px, 8vw, 82px);
+            margin: 0;
+            letter-spacing: -3px;
+        }
+
+        .subtitle {
+            font-size: 25px;
+            color: #4b5563;
+            margin-top: 18px;
+        }
+
+        .description {
+            font-size: 19px;
+            line-height: 1.9;
+            margin: 28px auto 0;
+            max-width: 650px;
+        }
+
+        .download {
+            display: inline-flex;
+            margin-top: 36px;
+            padding: 18px 32px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 17px;
+        }
+
+        .info {
+            margin-top: 16px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .section {
+            background: #f7f7f8;
+            padding: 80px 24px;
+        }
+
+        .inner {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 34px;
+            margin-bottom: 42px;
+        }
+
+        .step {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 22px;
+            margin-bottom: 16px;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        .usage {
+            padding: 80px 24px;
+        }
+
+        .cards {
+            max-width: 850px;
+            margin: auto;
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 26px;
+        }
+
+        .card strong {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 19px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+            border-top: 1px solid #eeeeee;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav>
+    <div class="brand">MYANGLISH IME</div>
+    <div class="version">Version 1.0.9</div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <h1>Myanglish</h1>
+
+        <div class="subtitle">
+            Burmese typing for Windows
+        </div>
+
+        <div class="description">
+            English keyboard နဲ့ Myanglish လို ရိုက်ရုံဖြင့်
+            မြန်မာစာအဖြစ် ပြောင်းပေးတဲ့ စနစ်တစ်ခုဖြစ်ပါတယ်။
+        </div>
+
+        <a
+            class="download"
+            href="https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.9/MyanglishInstaller.exe"
+        >
+            Download for Windows
+        </a>
+
+        <div class="info">
+            Windows 11 · x64 · Version 1.0.9
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="inner">
+        <h2>တပ်ဆင်နည်း</h2>
+
+        <div class="step">
+            1. Download for Windows ကိုနှိပ်ပြီး
+            MyanglishInstaller.exe ကို Download လုပ်ပါ။
+        </div>
+
+        <div class="step">
+            2. Download ပြီးသွားတဲ့ MyanglishInstaller.exe ကို
+            နှစ်ချက်နှိပ်ပြီး ဖွင့်ပါ။
+        </div>
+
+        <div class="step">
+            3. Windows က ခွင့်ပြုချက်တောင်းလာပါက
+            Yes ကိုနှိပ်ပါ။
+        </div>
+
+        <div class="step">
+            4. တပ်ဆင်ပြီးပါက Win + Space နှိပ်ပြီး
+            Myanglish ကိုရွေးပါ။
+        </div>
+    </div>
+</section>
+
+<section class="usage">
+    <div class="cards">
+
+        <div class="card">
+            <strong>Space</strong>
+            စကားလုံးကို မြန်မာလိုပြောင်းရန်
+        </div>
+
+        <div class="card">
+            <strong>Space ×2</strong>
+            အခြားစကားလုံးများကို ကြည့်ရန်
+        </div>
+
+        <div class="card">
+            <strong>ဆက်ရိုက်ခြင်း</strong>
+            စကားလုံးရွေးပြီးနောက် နောက်စာလုံးကို ဆက်ရိုက်ရုံဖြင့်
+            ရွေးထားသောစကားလုံးကို အလိုအလျောက် အတည်ပြုပေးပါမယ်။
+        </div>
+
+    </div>
+</section>
+
+<footer>
+    © 2026 Myanglish · Burmese typing for Windows
+</footer>
+
+</body>
+</html>
