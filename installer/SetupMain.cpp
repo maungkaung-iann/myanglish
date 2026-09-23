@@ -14,7 +14,7 @@ constexpr wchar_t kWindowClass[] = L"MyanglishSetupWindow";
 constexpr int kInstallButtonId = 1001;
 constexpr int kUninstallButtonId = 1002;
 constexpr wchar_t kProductDirectory[] = L"Myanglish";
-constexpr wchar_t kInstallVersion[] = L"1.0.10";
+constexpr wchar_t kInstallVersion[] = L"1.0.11";
 
 std::filesystem::path modulePath() {
     wchar_t path[32768]{};
@@ -706,4 +706,5 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR commandLine, int showCo
 
     return runInteractive(instance, showCommand);
 }
+
 
