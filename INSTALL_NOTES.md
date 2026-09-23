@@ -4,7 +4,7 @@
 
 Confirmed on 2026-09-21 with the exact `master` build.
 
-If `MyanglishSetup.exe` fails with `HRESULT 0x80070020`, check whether Windows Explorer has loaded the IME DLL:
+If `MyanglishInstaller.exe` fails with `HRESULT 0x80070020`, check whether Windows Explorer has loaded the IME DLL:
 
 ```powershell
 tasklist /m MyanglishIME.dll
@@ -15,7 +15,7 @@ If the output shows `explorer.exe`, temporarily stop Explorer, run the installer
 ```powershell
 Stop-Process -Name explorer -Force
 Start-Sleep -Seconds 2
-Start-Process "C:\Myanglish-Master-Exact\MyanglishSetup.exe" -Verb RunAs -Wait
+Start-Process "C:\Myanglish-Master-Exact\MyanglishInstaller.exe" -Verb RunAs -Wait
 Start-Process explorer.exe
 ```
 

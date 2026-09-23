@@ -163,8 +163,79 @@ endif()
 ###########################################################
 
 if(WIN32)
+    # --------------------------------------------------
+    # Standalone installer payload
+    # --------------------------------------------------
+
+    set(MYANGLISH_INSTALLER_PAYLOAD_DIR
+        "${CMAKE_CURRENT_BINARY_DIR}/installer_payload/$<CONFIG>"
+    )
+
+    add_custom_target(MyanglishInstallerPayload
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "${MYANGLISH_INSTALLER_PAYLOAD_DIR}"
+
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "${MYANGLISH_INSTALLER_PAYLOAD_DIR}/data"
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:MyanglishIME>"
+            "${MYANGLISH_INSTALLER_PAYLOAD_DIR}/MyanglishIME.dll"
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:MyanglishSettings>"
+            "${MYANGLISH_INSTALLER_PAYLOAD_DIR}/MyanglishSettings.exe"
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/data"
+            "${MYANGLISH_INSTALLER_PAYLOAD_DIR}/data"
+
+        DEPENDS
+            MyanglishIME
+            MyanglishSettings
+    )
+
+    file(GENERATE
+        OUTPUT
+            "${CMAKE_CURRENT_BINARY_DIR}/InstallerResources-$<CONFIG>.rc"
+        CONTENT
+"#include \"${CMAKE_CURRENT_SOURCE_DIR}/installer/Resource.h\"
+
+IDR_MYANGLISH_IME RCDATA \"${CMAKE_CURRENT_BINARY_DIR}/installer_payload/$<CONFIG>/MyanglishIME.dll\"
+IDR_MYANGLISH_SETTINGS RCDATA \"${CMAKE_CURRENT_BINARY_DIR}/installer_payload/$<CONFIG>/MyanglishSettings.exe\"
+
+IDR_DATA_1000 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/alpha08_candidates.csv\"
+IDR_DATA_1001 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/dictionary.csv\"
+IDR_DATA_1002 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/historical_candidates.csv\"
+IDR_DATA_1003 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/imported_lexicon_alpha1083_pack1.csv\"
+IDR_DATA_1004 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/imported_lexicon_alpha1083_pack2.csv\"
+IDR_DATA_1005 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/lexicon/burmese_lexicon.txt\"
+IDR_DATA_1006 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/lexicon/README.md\"
+IDR_DATA_1007 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/myanglish_rules/ranked_suffixes_alpha07.csv\"
+IDR_DATA_1008 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/myanglish_rules/ranked_suffixes_alpha08.csv\"
+IDR_DATA_1009 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/myanglish_rules/rhymes_master_v1.csv\"
+IDR_DATA_1010 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/myanglish_rules/suffix_families_alpha08.csv\"
+IDR_DATA_1011 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/ranked_candidates_alpha0109.csv\"
+IDR_DATA_1012 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/rules/finals.csv\"
+IDR_DATA_1013 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/rules/marks.csv\"
+IDR_DATA_1014 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/rules/medials.csv\"
+IDR_DATA_1015 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/rules/rhymes.csv\"
+IDR_DATA_1016 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/rules/tone_marks.csv\"
+IDR_DATA_1017 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/user_dictionary.example.csv\"
+IDR_DATA_1018 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/vowel.csv\"
+"
+    )
     add_executable(MyanglishSetup WIN32
         installer/SetupMain.cpp
+        "${CMAKE_CURRENT_BINARY_DIR}/InstallerResources-$<CONFIG>.rc"
+    )
+
+    add_dependencies(MyanglishSetup MyanglishInstallerPayload)
+
+    set_target_properties(
+        MyanglishSetup
+        PROPERTIES
+            OUTPUT_NAME "MyanglishInstaller"
     )
 
     target_compile_features(MyanglishSetup PRIVATE cxx_std_17)
