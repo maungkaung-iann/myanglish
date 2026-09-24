@@ -675,33 +675,9 @@ LRESULT CALLBACK CandidateWindow::windowProc(HWND hwnd, UINT message, WPARAM wPa
         }
         break;
     case WM_MOUSEMOVE:
-        if (self != nullptr) {
-            POINT point{
-                GET_X_LPARAM(lParam),
-                GET_Y_LPARAM(lParam)
-            };
-
-            std::size_t index = 0;
-
-            if (self->candidateIndexFromPoint(
-                    point,
-                    index
-                )
-                && index != self->selectedIndex_) {
-                self->setSelection(index);
-
-                if (self->selectionChangedCallback_
-                    != nullptr) {
-                    self->selectionChangedCallback_(
-                        self->selectionChangedContext_,
-                        index
-                    );
-                }
-            }
-
-            return 0;
-        }
-        break;
+        // Hover only. Do not change the selected candidate or preview.
+        // Candidate selection changes only after an actual mouse click.
+        return 0;
 
     case WM_LBUTTONDOWN:
         // Keep the host editor focused. The popup is WS_EX_NOACTIVATE,
