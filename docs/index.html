@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Myanglish — Burmese Typing for Windows</title>
-<meta name="description" content="Myanglish IME — Burmese typing, made simple and efficient.">
+<meta name="description" content="Myanglish IME — Myanglish လိုရိုက် မြန်မာလိုထွက်">
 
 <style>
 * {
@@ -628,6 +628,186 @@ footer {
         padding: 34px 24px;
     }
 }
+
+/* ==========================================================
+   MYANGLISH ADD-ON CSS
+   Existing theme is intentionally preserved.
+========================================================== */
+
+.hero h1 {
+    white-space: nowrap;
+    font-size: clamp(46px, 7vw, 82px);
+}
+
+.download-title-one-line {
+    white-space: nowrap;
+    font-size: clamp(30px, 5vw, 56px) !important;
+}
+
+.install-inline-image {
+    display: block;
+    width: min(100%, 720px);
+    height: auto;
+    margin: 28px auto 8px;
+    border-radius: 28px;
+    box-shadow: 0 14px 42px rgba(0,0,0,.10);
+}
+
+.keyboard-layout-image {
+    display: block;
+    width: min(100%, 560px);
+    height: auto;
+    margin: 28px auto 8px;
+    border-radius: 22px;
+    box-shadow: 0 12px 34px rgba(0,0,0,.10);
+}
+
+@media (max-width: 700px) {
+    .hero h1 {
+        font-size: clamp(35px, 10vw, 56px);
+        letter-spacing: -3px;
+    }
+
+    .download-title-one-line {
+        white-space: normal;
+        font-size: clamp(26px, 7vw, 38px) !important;
+    }
+}
+
+
+/* ==========================================================
+   MYANGLISH VERTICAL FEATURES
+========================================================== */
+
+.feature-grid {
+    display: block;
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.feature {
+    min-height: 0;
+    padding: 38px 0;
+    background: transparent;
+    border-radius: 0;
+    border-bottom: 1px solid #ddd;
+
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    column-gap: 22px;
+}
+
+.feature:first-child {
+    border-top: 1px solid #ddd;
+}
+
+.feature-label {
+    margin: 0;
+    padding-top: 5px;
+    color: #999;
+    font-size: 15px;
+    font-weight: 700;
+    grid-column: 1;
+    grid-row: 1 / span 3;
+}
+
+.feature strong {
+    display: block;
+    grid-column: 2;
+    margin: 0 0 14px;
+    font-size: 26px;
+    letter-spacing: -.6px;
+}
+
+.feature p {
+    grid-column: 2;
+    margin: 7px 0;
+    color: #555;
+    line-height: 1.9;
+}
+
+.feature-example {
+    grid-column: 2;
+    margin-top: 15px;
+    padding: 17px 19px;
+    border-radius: 15px;
+    background: #f6f6f7;
+    line-height: 2;
+}
+
+.feature code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: #f0f0f2;
+    font-family: Consolas, monospace;
+    font-size: .92em;
+}
+
+@media (max-width: 700px) {
+    .feature {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+
+    .feature-label,
+    .feature strong,
+    .feature p,
+    .feature-example {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .feature-label {
+        padding-top: 0;
+    }
+}
+
+
+/* ==========================================================
+   MYANGLISH CONTACT ADDON
+========================================================== */
+
+.myanglish-contact-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.myanglish-contact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 21px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.myanglish-contact:hover {
+    background: #f1f1f3;
+    transform: translateY(-1px);
+}
+
+.myanglish-creator {
+    margin-top: 38px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+    color: #777;
+    font-size: 13px;
+}
+
+.myanglish-creator strong {
+    color: #111;
+}
+
 </style>
 </head>
 
@@ -665,10 +845,10 @@ footer {
             Burmese Input Method for Windows
         </div>
 
-        <h1>MYANGLISH<br>IME</h1>
+        <h1>MYANGLISH IME</h1>
 
         <h2>
-            Burmese typing, made simple and efficient.
+            Myanglish လိုရိုက် မြန်မာလိုထွက်
         </h2>
 
         <div class="hero-description">
@@ -731,7 +911,7 @@ footer {
         <div class="section-title">
             <div class="section-kicker">Live Typing Example</div>
 
-            <h2>Type in English. Get Burmese.</h2>
+            <h2>Myanglish လိုရိုက် မြန်မာလိုထွက်</h2>
 
             <p>
                 mingalarpar → မင်္ဂလာပါ
@@ -772,7 +952,7 @@ footer {
         <div class="section-title">
             <div class="section-kicker">Free Download</div>
 
-            <h2>Download Myanglish for Windows</h2>
+            <h2 class="download-title-one-line">Download Myanglish for Windows</h2>
 
             <p>
                 Myanglish ကို Windows မှာ အခမဲ့ Download လုပ်ပြီး
@@ -864,6 +1044,12 @@ footer {
                         Windows SmartScreen ပေါ်လာပါက
                         More info ကိုနှိပ်ပါ။
                     </p>
+
+                    <img
+                        class="install-inline-image"
+                        src="images/smartscreen-guide.png"
+                        alt="Windows SmartScreen More info and Run anyway guide"
+                    >
                 </div>
             </div>
 
@@ -904,77 +1090,13 @@ footer {
                         Myanglish ကိုရွေးပါ။
                         ပြီးရင် Myanglish နဲ့ ချက်ချင်း စတင်ရိုက်နိုင်ပါပြီ။
                     </p>
+
+                    <img
+                        class="keyboard-layout-image"
+                        src="images/keyboard-layout-myanglish.png?v=3"
+                        alt="Windows keyboard layout showing Myanglish IME"
+                    >
                 </div>
-            </div>
-
-        </div>
-
-
-        <div class="smartscreen-note">
-
-            <strong>Why does this appear?</strong>
-
-            <p>
-                လက်ရှိ MyanglishInstaller.exe ကို
-                commercial code-signing certificate ဖြင့်
-                sign မလုပ်ရသေးတဲ့အတွက် Windows SmartScreen က
-                Unknown publisher အဖြစ် သတိပေးချက်ပြနိုင်ပါတယ်။
-                ဒီအခြေအနေကို နောက်ပိုင်း release များမှာ
-                ပိုကောင်းအောင် ပြင်ဆင်သွားဖို့ စီစဉ်ထားပါတယ်။
-            </p>
-
-        </div>
-
-    </div>
-</section>
-
-
-<section class="section">
-    <div class="container">
-
-        <div class="section-title">
-            <div class="section-kicker">SmartScreen Visual Guide</div>
-
-            <h2>Windows SmartScreen Guide</h2>
-
-            <p>
-                Myanglish ကို ပထမဆုံး install လုပ်တဲ့အခါ
-                အောက်ပါ screen ပေါ်လာနိုင်ပါတယ်။
-            </p>
-        </div>
-
-
-        <div class="guide-image">
-            <img
-                src="images/smartscreen-guide.png"
-                alt="Windows SmartScreen installation guide"
-            >
-        </div>
-
-
-        <div class="smart-actions">
-
-            <div class="smart-action">
-                <span>STEP 1</span>
-
-                <strong>Click “More info”</strong>
-
-                <p>
-                    Windows protected your PC screen ပေါ်လာပါက
-                    More info ကိုနှိပ်ပါ။
-                </p>
-            </div>
-
-
-            <div class="smart-action">
-                <span>STEP 2</span>
-
-                <strong>Click “Run anyway”</strong>
-
-                <p>
-                    Run anyway ကိုနှိပ်ပြီး
-                    Myanglish Installer ကို ဆက်ဖွင့်ပါ။
-                </p>
             </div>
 
         </div>
@@ -988,103 +1110,253 @@ footer {
 
         <div class="section-title">
             <div class="section-kicker">Features</div>
-
-            <h2>Myanglish ရဲ့ အဓိကလုပ်ဆောင်ချက်များ</h2>
+            <h2>Myanglish Features</h2>
         </div>
-
 
         <div class="feature-grid">
 
             <div class="feature">
                 <div class="feature-label">01</div>
+
                 <strong>Myanglish Typing</strong>
+
                 <p>
                     English keyboard ကိုအသုံးပြုပြီး
+                    <b>Myanglish လို ရိုက်ကာ <code>Space</code> နှိပ်ရုံဖြင့်
+                    မြန်မာစကားလုံးအဖြစ် ပြောင်းနိုင်ပါတယ်။</b>
+                </p>
+
+                <p>
+                    Keyboard layout အသစ်ကို အလွတ်ကျက်စရာမလိုဘဲ
                     ရင်းနှီးပြီးသား Myanglish ပုံစံနဲ့
-                    မြန်မာစာရိုက်နိုင်ပါတယ်။
+                    မြန်မာစာကို လွယ်ကူစွာ ရိုက်နိုင်ပါတယ်။
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">02</div>
-                <strong>Candidate Selection</strong>
+
+                <strong>Fast Typing with Auto-Commit</strong>
+
                 <p>
-                    Space ကို တစ်ချက်နှိပ်ပြီး
-                    ပထမ candidate ကို ရွေးချယ်နိုင်ပါတယ်။
+                    <code>Space</code> နှိပ်ပြီး လိုချင်တဲ့ မြန်မာစကားလုံးကို
+                    ရွေးထားပြီးနောက်
+                    <b>နောက်စကားလုံးကို စရိုက်တာနဲ့
+                    ရွေးထားတဲ့စကားလုံးကို အလိုအလျောက် အတည်ပြုပေးပါတယ်။</b>
+                </p>
+
+                <p>
+                    ဒါကြောင့် <code>Space</code> နဲ့ candidate ရွေးရင်း
+                    ဆက်တိုက် မြန်မြန်စာရိုက်နိုင်ပါတယ်။
+                    <b><code>Enter</code> နှိပ်ပြီး အတည်ပြုထည့်ချင်လည်း ရပါတယ်။</b>
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">03</div>
-                <strong>Multiple Candidates</strong>
+
+                <strong>Learns Your Word Choices</strong>
+
                 <p>
-                    Space ကို ထပ်နှိပ်ပြီး
-                    အခြား candidate စကားလုံးတွေကို
-                    တစ်ခုပြီးတစ်ခု ရွေးချယ်နိုင်ပါတယ်။
+                    စကားလုံးတွေထဲက user အသုံးများတဲ့ စကားလုံးတွေကို
+                    မှတ်သားထားပြီး
+                    <b>အသုံးများလာတဲ့ စကားလုံးကို
+                    အပေါ်ရောက်လာအောင် ပြောင်းပေးပါတယ်။</b>
+                </p>
+
+                <p>
+                    ဒါကြောင့် ကိုယ်မကြာခဏသုံးတဲ့ စကားလုံးတွေကို
+                    နောက်တစ်ကြိမ်ရိုက်တဲ့အခါ
+                    ပိုလွယ်ကူစွာ ရွေးချယ်နိုင်ပါတယ်။
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">04</div>
-                <strong>Quick Commit</strong>
+
+                <strong>Easy Myanmar Stacking</strong>
+
                 <p>
-                    ရွေးထားတဲ့စကားလုံးနောက်
-                    စာဆက်ရိုက်လိုက်တာနဲ့
-                    လက်ရှိစကားလုံးကို အလိုအလျောက်
-                    အတည်ပြုပေးပါတယ်။
+                    ပတ်ဆင့်စာလုံး ရိုက်ချင်တဲ့အခါ
+                    <b>မူရင်းအသံထွက်အတိုင်း ရိုက်ပြီး
+                    <code>Ctrl + Enter</code> နှိပ်ရုံဖြင့်
+                    ပတ်ဆင့်အဖြစ် ပြောင်းပေးပါတယ်။</b>
                 </p>
+
+                <div class="feature-example">
+                    လိမ် + မော် + Ctrl + Enter → လိမ္မော်<br>
+                    မင်း + ဂ + Ctrl + Enter → မင်္ဂ
+                </div>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">05</div>
-                <strong>English Inside Burmese</strong>
+
+                <strong>English as the Second Candidate</strong>
+
                 <p>
-                    မြန်မာစာရိုက်နေစဉ်
-                    လိုအပ်တဲ့ English စကားလုံးတွေကိုလည်း
-                    ထည့်သွင်းရိုက်နိုင်ပါတယ်။
+                    ရွေးချယ်စရာစကားလုံးများရဲ့
+                    <b>ဒုတိယ candidate နေရာမှာ
+                    မူရင်း English/Myanglish word ကို အမြဲထားပေးပါတယ်။</b>
+                </p>
+
+                <p>
+                    မြန်မာစာရိုက်နေရင်း English word သို့မဟုတ်
+                    English sentence ရေးချင်တဲ့အခါ
+                    မူရင်း English candidate ကို <code>Space</code> နဲ့ရွေးပြီး
+                    ဆက်ရိုက်နိုင်ပါတယ်။
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">06</div>
-                <strong>Myanmar Punctuation</strong>
+
+                <strong>Smart Spacing for Burmese + English</strong>
+
                 <p>
-                    အသုံးများတဲ့ punctuation တွေကို
-                    မြန်မာစာရေးသားမှုနဲ့ ကိုက်ညီအောင်
-                    အသုံးပြုနိုင်ပါတယ်။
+                    မြန်မာစာရိုက်နေရင်း English စကားလုံးကို
+                    ကြားညှပ်ရိုက်တဲ့အခါ
+                    <b>မြန်မာစကားလုံးနဲ့ English စကားလုံးကြားမှာ
+                    လိုအပ်တဲ့ space ကို အလိုအလျောက် ထည့်ပေးပါတယ်။</b>
+                </p>
+
+                <p>
+                    ဒါကြောင့် မြန်မာနဲ့ English ရောပြီးရေးတဲ့ စာတွေကို
+                    ဖတ်ရလွယ်ကူပြီး သပ်ရပ်စေပါတယ်။
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">07</div>
-                <strong>Fast Language Switching</strong>
+
+                <strong>Capital English with CapsLock</strong>
+
                 <p>
-                    Win + Space ကနေ
-                    Myanglish ကို လွယ်ကူစွာ
-                    ရွေးချယ်အသုံးပြုနိုင်ပါတယ်။
+                    မြန်မာစာရိုက်နေရင်း English စကားလုံးအကြီး
+                    ရိုက်ချင်တဲ့အခါ
+                    <b><code>CapsLock</code> ကိုအသုံးပြုပြီး
+                    English capital letters ရိုက်နိုင်ပါတယ်။</b>
+                </p>
+
+                <p>
+                    မြန်မာစာရိုက်နေရာကနေ English စာလုံးအကြီးလိုအပ်တဲ့အခါ
+                    keyboard layout ကို သီးသန့်ပြောင်းစရာမလိုပါဘူး။
                 </p>
             </div>
 
 
             <div class="feature">
                 <div class="feature-label">08</div>
-                <strong>Familiar Keyboard</strong>
+
+                <strong>Quick Language Switching</strong>
+
                 <p>
-                    Keyboard layout အသစ်ကို
-                    အစကနေ အလွတ်ကျက်စရာမလိုဘဲ
-                    English keyboard ပေါ်မှာပဲ
-                    Myanglish နဲ့ ရိုက်နိုင်ပါတယ်။
+                    <b><code>Shift + Space</code></b> ကိုနှိပ်ပြီး
+                    Myanglish mode ကနေ English mode ကို
+                    အလွယ်တကူ ပြောင်းနိုင်ပါတယ်။
+                </p>
+
+                <p>
+                    English ရိုက်ပြီးတဲ့အခါ
+                    <code>Shift + Space</code> ကို ထပ်နှိပ်ပြီး
+                    Myanglish mode ကို ပြန်ပြောင်းနိုင်ပါတယ်။
                 </p>
             </div>
 
-        </div>
 
+            <div class="feature">
+                <div class="feature-label">09</div>
+
+                <strong>Myanmar Punctuation from English Layout</strong>
+
+                <p>
+                    English keyboard layout ကနေပဲ
+                    မြန်မာ punctuation နဲ့ အသုံးများတဲ့
+                    မြန်မာစာလုံးတွေကို တိုက်ရိုက်ရိုက်နိုင်ပါတယ်။
+                </p>
+
+                <div class="feature-example">
+                    , → ၊<br>
+                    . → ။<br>
+                    : → း<br>
+                    ; → ့<br>
+                    \ → င်္<br>
+                    | → င
+                </div>
+
+                <p>
+                    ဒါကြောင့် punctuation ရိုက်ဖို့အတွက်
+                    keyboard layout သီးသန့်ပြောင်းစရာမလိုပါဘူး။
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <div class="feature-label">10</div>
+
+                <strong>Add Your Own Words</strong>
+
+                <p>
+                    မူရင်း Myanglish dictionary ထဲမှာ မရှိသေးတဲ့
+                    စကားလုံးတွေကို
+                    <b>candidate popup အောက်မှာရှိတဲ့
+                    <code>+ Add / manage words...</code> ကိုနှိပ်ပြီး
+                    ကိုယ်လိုချင်တဲ့ စကားလုံးကို ထည့်နိုင်ပါတယ်။</b>
+                </p>
+
+                <p>
+                    ဒါကြောင့် ကိုယ်အသုံးများတဲ့ နာမည်၊ အသုံးအနှုန်းနဲ့
+                    dictionary ထဲမှာ မပါသေးတဲ့ စကားလုံးတွေကို
+                    ကိုယ်တိုင်ထည့်သွင်းအသုံးပြုနိုင်ပါတယ်။
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <div class="feature-label">11</div>
+
+                <strong>Tab for a Real Space</strong>
+
+                <p>
+                    မြန်မာစကားလုံးရိုက်ပြီးနောက်
+                    <b>space တစ်နေရာခြားချင်တဲ့အခါ
+                    <code>Tab</code> key ကို အသုံးပြုနိုင်ပါတယ်။</b>
+                </p>
+
+                <p>
+                    Candidate ရွေးချယ်ဖို့သုံးတဲ့ <code>Space</code> နဲ့
+                    စာကြားတကယ့် space ထည့်ဖို့သုံးတဲ့ <code>Tab</code> ကို
+                    ခွဲထားတဲ့အတွက် Myanglish ကို
+                    မြန်မြန်ဆန်ဆန် ရိုက်နိုင်ပါတယ်။
+                </p>
+            </div>
+
+
+            <div class="feature">
+                <div class="feature-label">12</div>
+
+                <strong>Myanmar Numbers</strong>
+
+                <p>
+                    English keyboard ရဲ့
+                    <b><code>0–9</code> ကို အသုံးပြုပြီး
+                    မြန်မာဂဏန်း <code>၀–၉</code> ကို
+                    တိုက်ရိုက်ရိုက်နိုင်ပါတယ်။</b>
+                </p>
+
+                <div class="feature-example">
+                    0 → ၀　1 → ၁　2 → ၂　3 → ၃　4 → ၄<br>
+                    5 → ၅　6 → ၆　7 → ၇　8 → ၈　9 → ၉
+                </div>
+            </div>
+
+        </div>
     </div>
 </section>
 
@@ -1099,7 +1371,7 @@ footer {
 
             <p>
                 Windows အတွက် လက်ရှိဖြန့်ချိထားသော
-                Myanglish Stable Release ဖြစ်ပါတယ်။
+                Myanglish Official Release ဖြစ်ပါတယ်။
             </p>
         </div>
 
@@ -1108,7 +1380,7 @@ footer {
 
             <div class="release-top">
                 <h3>Myanglish 1.0.11</h3>
-                <div class="stable">Stable</div>
+                <div class="stable">Official</div>
             </div>
 
 
@@ -1179,15 +1451,25 @@ footer {
                 <span>Word Suggestion</span>
             </div>
 
+            <div class="myanglish-contact-links">
 
-            <a
-                class="support-link"
-                href="https://github.com/maungkaung-iann/myanglish"
-                target="_blank"
-                rel="noopener"
-            >
-                View Project on GitHub →
-            </a>
+                <a
+                    class="myanglish-contact"
+                    href="https://m.me/KAUNG69?hash=AbaJ6n-XWMuU2SQa&amp;source_id=8585216"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Messenger
+                </a>
+
+                <a
+                    class="myanglish-contact"
+                    href="mailto:maungkaung.jp@gmail.com"
+                >
+                    maungkaung.jp@gmail.com
+                </a>
+
+            </div>
 
         </div>
 
@@ -1206,7 +1488,7 @@ footer {
                 <strong>Myanglish</strong>
 
                 <p>
-                    Burmese typing, made simple and efficient.
+                    Myanglish လိုရိုက် မြန်မာလိုထွက်
                     <br>
                     Burmese Input Method for Windows.
                 </p>
@@ -1243,6 +1525,10 @@ footer {
         </div>
 
 
+
+        <div class="myanglish-creator">
+            Created by <strong>MAUNG KAUNG</strong>
+        </div>
         <div class="copyright">
             © 2026 Myanglish · All rights reserved.
         </div>
@@ -1252,3 +1538,9 @@ footer {
 
 </body>
 </html>
+
+
+
+
+
+
