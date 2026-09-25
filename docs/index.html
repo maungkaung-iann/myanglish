@@ -808,10 +808,88 @@ footer {
     color: #111;
 }
 
+
+/* ===== TOP MYANGLISH TYPING ADD-ON ===== */
+.top-typing-demo{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+    text-align:center;
+    background:#000;
+    color:#fff;
+    overflow:hidden;
+}
+.top-typing-inner{width:min(1200px,94vw)}
+.top-typing-label{
+    margin-bottom:35px;
+    font-family:"Segoe UI",Arial,sans-serif;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.45;
+}
+.top-typing-line{
+    height:170px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:"Segoe UI",Arial,sans-serif;
+    font-size:clamp(55px,9vw,130px);
+    font-weight:700;
+    line-height:1;
+    letter-spacing:-.06em;
+}
+.top-typing-text{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:1.2em;
+    line-height:1;
+}
+.top-typing-text.myanglish{font-family:"Segoe UI",Arial,sans-serif;line-height:1}
+.top-typing-text.myanmar{
+    font-family:"Myanmar Text","Noto Sans Myanmar","Segoe UI",sans-serif;
+    font-size:.82em;
+    line-height:1;
+    letter-spacing:-.04em;
+    transform:translateY(8px);
+}
+.top-typing-cursor{
+    display:inline-block;
+    flex-shrink:0;
+    width:4px;
+    height:.82em;
+    margin-left:12px;
+    background:currentColor;
+    animation:topTypingBlink .75s steps(1) infinite;
+}
+@keyframes topTypingBlink{0%,45%{opacity:1}46%,100%{opacity:0}}
+.top-typing-result-pop{animation:topTypingResult .22s cubic-bezier(.16,1,.3,1)}
+@keyframes topTypingResult{from{opacity:0}to{opacity:1}}
+@media(max-width:600px){
+    .top-typing-line{height:120px;font-size:clamp(42px,13vw,72px)}
+    .top-typing-cursor{width:3px;margin-left:7px}
+    .top-typing-text.myanmar{transform:translateY(6px)}
+}
+@media(prefers-reduced-motion:reduce){.top-typing-cursor{animation:none}}
+
 </style>
 </head>
 
 <body>
+
+<section class="top-typing-demo" aria-label="Myanglish typing demonstration">
+    <div class="top-typing-inner">
+        <div class="top-typing-label">TYPE IN MYANGLISH</div>
+        <div class="top-typing-line">
+            <span id="topTypingText" class="top-typing-text myanglish"></span>
+            <span id="topTypingCursor" class="top-typing-cursor" aria-hidden="true"></span>
+        </div>
+    </div>
+</section>
 
 <nav>
     <div class="nav-inner">
@@ -1535,6 +1613,61 @@ footer {
 
     </div>
 </footer>
+
+
+<script>
+(()=>{
+    const text=document.getElementById("topTypingText");
+    const cursor=document.getElementById("topTypingCursor");
+    if(!text||!cursor)return;
+    const myanglishWord="mingalarpar";
+    const myanmarWord="မင်္ဂလာပါ";
+    const typingSpeed=110;
+    const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+    async function typeMyanglish(){
+        text.className="top-typing-text myanglish";
+        text.textContent="";
+        for(const letter of myanglishWord){
+            text.textContent+=letter;
+            await wait(typingSpeed);
+        }
+    }
+
+    async function runDemo(){
+        if(matchMedia("(prefers-reduced-motion: reduce)").matches){
+            text.className="top-typing-text myanmar";
+            text.textContent=myanmarWord;
+            return;
+        }
+        while(true){
+            text.className="top-typing-text myanglish";
+            text.textContent="";
+            text.style.opacity="1";
+            cursor.style.display="inline-block";
+            await wait(300);
+            await typeMyanglish();
+            await wait(500);
+            cursor.style.display="none";
+            text.style.opacity="0";
+            await wait(100);
+            text.textContent=myanmarWord;
+            text.className="top-typing-text myanmar top-typing-result-pop";
+            text.style.opacity="1";
+            cursor.style.display="inline-block";
+            await wait(1800);
+            text.style.opacity="0";
+            cursor.style.display="none";
+            await wait(250);
+            text.textContent="";
+            text.className="top-typing-text myanglish";
+            text.style.opacity="1";
+            await wait(350);
+        }
+    }
+    runDemo();
+})();
+</script>
 
 </body>
 </html>
