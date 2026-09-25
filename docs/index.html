@@ -834,6 +834,62 @@ footer {
 @media(max-width:700px){.mx-scroll-story{height:2700px}.mx-scroll-stage{top:64px;min-height:520px}.mx-type-line{font-size:clamp(34px,11vw,58px)}.mx-scroll-kicker{margin-bottom:34px}.mx-space-key{height:56px;margin-top:44px}.mx-result-word{font-size:clamp(48px,15vw,82px)}}
 @media(prefers-reduced-motion:reduce){.mx-scroll-story{height:auto}.mx-scroll-stage{position:relative;top:auto;height:auto;min-height:600px}.mx-letter{opacity:1;transform:none;filter:none}.mx-space-key{background:#000;color:#fff;box-shadow:none}.mx-result-story{position:relative;inset:auto;opacity:1;transform:none;min-height:320px;margin-top:40px}.mx-boom{display:none}}
 
+
+/* ===== Editorial Product Launch Upgrade ===== */
+.hero{min-height:calc(100vh - 64px);padding:150px 24px 110px}
+.hero-inner{max-width:1180px}
+.hero .eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:#777}
+.hero h1{font-size:clamp(64px,11vw,150px);letter-spacing:-.075em;line-height:.82}
+.hero h2{font-size:clamp(26px,4.2vw,52px);margin-top:38px;color:#111}
+.hero-description{font-size:17px;max-width:620px;color:#666}
+.primary-button{border:1px solid #111}
+.section{padding:150px 24px}
+.section-title{margin-bottom:80px}
+.section-title h2{font-size:clamp(44px,7vw,82px);letter-spacing:-.055em;line-height:.95}
+.section-kicker{text-transform:uppercase;letter-spacing:.16em;font-size:11px}
+.section-soft{background:#f4f4f2}
+.demo{max-width:980px;padding:0;background:#fff;color:#111;border:1px solid #d9d9d9;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.08)}
+.demo:before{content:"";display:block;height:46px;background:linear-gradient(#fafafa,#f2f2f2);border-bottom:1px solid #ddd}
+.demo-label,.demo-input,.demo-arrow,.demo-output{margin-left:clamp(24px,6vw,72px);margin-right:clamp(24px,6vw,72px)}
+.demo-label{margin-top:44px}
+.demo-output{margin-bottom:54px}
+.feature-grid{max-width:1050px}
+.feature{padding:70px 0;grid-template-columns:100px 1fr}
+.feature-label{font-size:13px;letter-spacing:.15em}
+.feature strong{font-size:clamp(30px,4vw,48px);letter-spacing:-.045em}
+.feature p{max-width:760px;font-size:16px}
+.release-card{max-width:1050px;padding:60px;border-radius:0;border-left:0;border-right:0}
+.release-card h3{font-size:clamp(34px,5vw,56px);letter-spacing:-.04em}
+.stable{background:#111;color:#fff}
+.mx-keyboard-showcase{background:#000;color:#fff;padding:150px 24px;overflow:hidden}
+.mx-keyboard-wrap{max-width:1120px;margin:auto}
+.mx-keyboard-copy{max-width:820px;margin-bottom:80px}
+.mx-keyboard-copy small{display:block;color:#888;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:18px}
+.mx-keyboard-copy h2{margin:0;font-size:clamp(48px,8vw,100px);letter-spacing:-.065em;line-height:.92}
+.mx-keyboard-copy p{color:#aaa;max-width:620px;font-size:17px;line-height:1.8;margin-top:28px}
+.mx-keyboard{perspective:1100px}
+.mx-board{padding:26px;border:1px solid #333;border-radius:24px;background:#0b0b0b;transform:rotateX(15deg);transform-origin:center bottom;box-shadow:0 45px 80px rgba(255,255,255,.06);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.mx-board:hover{transform:rotateX(10deg) translateY(-6px)}
+.mx-key-row{display:grid;grid-template-columns:repeat(10,1fr);gap:10px;margin-bottom:10px}
+.mx-key-row:last-child{grid-template-columns:1fr 5fr 1fr 1fr;margin-bottom:0}
+.mx-k{min-height:58px;border:1px solid #333;border-radius:10px;background:#111;display:flex;align-items:center;justify-content:center;color:#777;font-size:11px;box-shadow:0 5px 0 #050505;transition:.18s}
+.mx-k:hover{transform:translateY(-4px);border-color:#777;color:#fff}
+.mx-k.hot{background:#fff;color:#000;border-color:#fff;font-weight:800}
+.mx-install-story .steps{max-width:1050px;position:relative}
+.mx-install-story .step{grid-template-columns:110px 1fr;padding:58px 0}
+.mx-install-story .step-number{width:auto;height:auto;background:none;color:#999;border-radius:0;justify-content:flex-start;font-size:12px;letter-spacing:.16em}
+.mx-install-story .step-text strong{font-size:clamp(27px,4vw,42px);letter-spacing:-.035em}
+.mx-final-cta{background:#000;color:#fff;padding:170px 24px;text-align:center}
+.mx-final-cta .inner{max-width:1000px;margin:auto}
+.mx-final-cta .tiny{color:#888;text-transform:uppercase;letter-spacing:.18em;font-size:11px}
+.mx-final-cta h2{font-size:clamp(52px,9vw,118px);letter-spacing:-.07em;line-height:.86;margin:28px 0 36px}
+.mx-final-cta p{color:#aaa;margin:0 0 8px}
+.mx-final-cta .primary-button{background:#fff;color:#000;border-color:#fff}
+footer{background:#fff}
+.reveal-up{opacity:0;transform:translateY(42px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal-up.visible{opacity:1;transform:none}
+@media(max-width:700px){.hero{padding-top:110px}.hero h1{font-size:clamp(50px,16vw,82px);white-space:normal}.section{padding:100px 20px}.section-title h2{font-size:clamp(38px,12vw,58px)}.feature{grid-template-columns:1fr;padding:48px 0}.mx-keyboard-showcase{padding:100px 18px}.mx-board{padding:12px;transform:rotateX(8deg)}.mx-key-row{gap:5px;margin-bottom:5px}.mx-k{min-height:38px;font-size:8px;border-radius:6px}.mx-install-story .step{grid-template-columns:1fr;padding:40px 0}.mx-final-cta{padding:120px 20px}}
+
 </style>
 </head>
 
@@ -1039,7 +1095,7 @@ footer {
 </section>
 
 
-<section class="section section-soft" id="install">
+<section class="section section-soft mx-install-story" id="install">
     <div class="container">
 
         <div class="section-title">
@@ -1592,6 +1648,10 @@ const down=p>=spaceStart&&p<spaceEnd;space.classList.toggle('down',down);
 const hit=p>=spaceEnd;if(hit&&!lastBoom){boom.classList.remove('go');void boom.offsetWidth;boom.classList.add('go')}lastBoom=hit;
 result.classList.toggle('show',p>=resultStart)}
 function request(){if(!ticking){ticking=true;requestAnimationFrame(render)}}addEventListener('scroll',request,{passive:true});addEventListener('resize',request);render()})();
+</script>
+
+<script>
+(()=>{const els=document.querySelectorAll('.section-title,.feature,.step,.release-card,.download-card,.demo,.reveal-up');els.forEach(e=>e.classList.add('reveal-up'));if(matchMedia('(prefers-reduced-motion: reduce)').matches){els.forEach(e=>e.classList.add('visible'));return}const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible')}),{threshold:.12,rootMargin:'0px 0px -6%'});els.forEach(e=>io.observe(e))})();
 </script>
 </body>
 </html>
