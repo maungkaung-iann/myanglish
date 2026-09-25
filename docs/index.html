@@ -808,6 +808,32 @@ footer {
     color: #111;
 }
 
+
+/* ===== UIUX Pro Max: Monochrome Scroll Transformation ===== */
+.mx-scroll-story{height:3200px;position:relative;background:#fff;color:#000;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5}
+.mx-scroll-stage{position:sticky;top:64px;height:calc(100vh - 64px);min-height:560px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+.mx-scroll-inner{width:min(1120px,100%);padding:40px 24px;text-align:center;position:relative}
+.mx-scroll-kicker{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#777;margin-bottom:42px}
+.mx-type-line{min-height:1.25em;display:flex;justify-content:center;align-items:center;flex-wrap:nowrap;font-family:"Segoe UI",Arial,sans-serif;font-size:clamp(46px,9vw,112px);font-weight:750;letter-spacing:-.065em;line-height:1}
+.mx-letter{display:inline-block;opacity:.06;transform:translateY(32px) scale(.82);filter:blur(7px);transition:opacity .18s linear,transform .18s linear,filter .18s linear}
+.mx-letter.on{opacity:1;transform:none;filter:none}
+.mx-caret-story{width:3px;height:.82em;background:#000;margin-left:10px;animation:mxCaretStory .8s steps(1) infinite}
+@keyframes mxCaretStory{50%{opacity:0}}
+.mx-space-key{width:min(520px,76vw);height:64px;margin:54px auto 0;border:2px solid #000;border-radius:13px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.18em;box-shadow:0 8px 0 #000;transform:translateY(0);transition:transform .12s linear,box-shadow .12s linear,background .12s linear,color .12s linear}
+.mx-space-key.down{transform:translateY(8px);box-shadow:0 0 0 #000;background:#000;color:#fff}
+.mx-boom{position:absolute;left:50%;top:50%;width:40px;height:40px;border:2px solid #000;border-radius:50%;transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none}
+.mx-boom.go{animation:mxBoom .5s ease-out both}
+@keyframes mxBoom{0%{opacity:1;transform:translate(-50%,-50%) scale(.2);border-width:8px}100%{opacity:0;transform:translate(-50%,-50%) scale(28);border-width:1px}}
+.mx-result-story{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#000;color:#fff;opacity:0;transform:scale(1.04);pointer-events:none;transition:opacity .24s ease,transform .45s cubic-bezier(.2,.8,.2,1)}
+.mx-result-story.show{opacity:1;transform:scale(1)}
+.mx-result-label{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#aaa;margin-bottom:26px}
+.mx-result-word{font-family:"Myanmar Text","Segoe UI",sans-serif;font-size:clamp(54px,11vw,132px);font-weight:700;line-height:1.3;letter-spacing:-.03em}
+.mx-result-sub{margin-top:28px;font-size:14px;color:#aaa}
+.mx-progress{position:absolute;left:0;bottom:0;height:3px;background:#000;width:0}
+.mx-result-story .mx-progress{background:#fff}
+@media(max-width:700px){.mx-scroll-story{height:2700px}.mx-scroll-stage{top:64px;min-height:520px}.mx-type-line{font-size:clamp(34px,11vw,58px)}.mx-scroll-kicker{margin-bottom:34px}.mx-space-key{height:56px;margin-top:44px}.mx-result-word{font-size:clamp(48px,15vw,82px)}}
+@media(prefers-reduced-motion:reduce){.mx-scroll-story{height:auto}.mx-scroll-stage{position:relative;top:auto;height:auto;min-height:600px}.mx-letter{opacity:1;transform:none;filter:none}.mx-space-key{background:#000;color:#fff;box-shadow:none}.mx-result-story{position:relative;inset:auto;opacity:1;transform:none;min-height:320px;margin-top:40px}.mx-boom{display:none}}
+
 </style>
 </head>
 
@@ -878,6 +904,27 @@ footer {
     </div>
 </section>
 
+
+
+<section class="mx-scroll-story" id="scroll-typing" aria-label="Myanglish scroll typing demonstration">
+  <div class="mx-scroll-stage">
+    <div class="mx-scroll-inner">
+      <div class="mx-scroll-kicker">Scroll to type · Myanglish IME</div>
+      <div class="mx-type-line" aria-label="mingalarpar">
+        <span class="mx-letter">m</span><span class="mx-letter">i</span><span class="mx-letter">n</span><span class="mx-letter">g</span><span class="mx-letter">a</span><span class="mx-letter">l</span><span class="mx-letter">a</span><span class="mx-letter">r</span><span class="mx-letter">p</span><span class="mx-letter">a</span><span class="mx-letter">r</span><span class="mx-caret-story" aria-hidden="true"></span>
+      </div>
+      <div class="mx-space-key" aria-hidden="true">SPACE</div>
+      <div class="mx-boom" aria-hidden="true"></div>
+      <div class="mx-progress" aria-hidden="true"></div>
+    </div>
+    <div class="mx-result-story" aria-live="polite">
+      <div class="mx-result-label">Converted to Myanmar</div>
+      <div class="mx-result-word">မင်္ဂလာပါ</div>
+      <div class="mx-result-sub">Myanglish လိုရိုက် · မြန်မာလိုထွက်</div>
+      <div class="mx-progress" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
 
 <div class="quick-start">
     <div class="quick-inner">
@@ -1536,6 +1583,16 @@ footer {
     </div>
 </footer>
 
+
+<script>
+(()=>{const story=document.querySelector('.mx-scroll-story');if(!story)return;const letters=[...story.querySelectorAll('.mx-letter')],space=story.querySelector('.mx-space-key'),boom=story.querySelector('.mx-boom'),result=story.querySelector('.mx-result-story'),bars=story.querySelectorAll('.mx-progress');let lastBoom=false,ticking=false;
+function render(){ticking=false;const r=story.getBoundingClientRect(),travel=Math.max(1,story.offsetHeight-innerHeight),p=Math.max(0,Math.min(1,-r.top/travel));bars.forEach(b=>b.style.width=(p*100)+'%');
+const typingEnd=.68,spaceStart=.70,spaceEnd=.80,resultStart=.82;const tp=Math.min(1,p/typingEnd);const count=Math.min(letters.length,Math.floor(tp*letters.length+0.001));letters.forEach((el,i)=>el.classList.toggle('on',i<count));
+const down=p>=spaceStart&&p<spaceEnd;space.classList.toggle('down',down);
+const hit=p>=spaceEnd;if(hit&&!lastBoom){boom.classList.remove('go');void boom.offsetWidth;boom.classList.add('go')}lastBoom=hit;
+result.classList.toggle('show',p>=resultStart)}
+function request(){if(!ticking){ticking=true;requestAnimationFrame(render)}}addEventListener('scroll',request,{passive:true});addEventListener('resize',request);render()})();
+</script>
 </body>
 </html>
 
