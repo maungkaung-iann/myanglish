@@ -1169,7 +1169,15 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             debugLogHr("commit composition before plain CapsLock", capsCommit);
         }
 
+        const bool wasPlainCapsCapitalMode = plainCapsCapitalMode_;
         plainCapsCapitalMode_ = !plainCapsCapitalMode_;
+
+        // CapsLock ON -> capital letter -> CapsLock OFF:
+        // continue the same English word without an automatic space.
+        // Example: M + yanmar -> Myanmar
+        if (wasPlainCapsCapitalMode && !plainCapsCapitalMode_) {
+            mixedCaseCapsWord_ = true;
+        }
         debugLog(plainCapsCapitalMode_
             ? "Plain CapsLock: English capital bypass ON"
             : "Plain CapsLock: English capital bypass OFF");
