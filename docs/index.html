@@ -808,51 +808,6 @@ footer {
     color: #111;
 }
 
-
-/* ===== Myanglish Interactive 3D Experience ===== */
-:root{--mx:#111;--glass:rgba(255,255,255,.68);--line:rgba(17,17,17,.10)}
-body{overflow-x:hidden}
-.hero{position:relative;overflow:hidden;perspective:1200px;background:
-radial-gradient(circle at 20% 20%,rgba(104,128,255,.13),transparent 32%),
-radial-gradient(circle at 82% 32%,rgba(203,94,255,.12),transparent 30%),#fff}
-.hero-inner{position:relative;z-index:3}
-.mx-orbit{position:absolute;inset:0;pointer-events:none;z-index:1;transform-style:preserve-3d}
-.mx-key{position:absolute;width:70px;height:70px;border:1px solid rgba(255,255,255,.75);border-radius:18px;
-display:grid;place-items:center;font-weight:800;font-size:20px;background:rgba(255,255,255,.55);
-box-shadow:0 20px 50px rgba(30,30,60,.14),inset 0 1px 0 #fff;backdrop-filter:blur(18px);
-transform-style:preserve-3d;animation:mxFloat 6s ease-in-out infinite}
-.mx-key:nth-child(1){left:7%;top:20%;animation-delay:-1s}.mx-key:nth-child(2){left:15%;bottom:18%;animation-delay:-3s}
-.mx-key:nth-child(3){right:10%;top:17%;animation-delay:-2s}.mx-key:nth-child(4){right:18%;bottom:17%;animation-delay:-4s}
-.mx-key:nth-child(5){left:48%;top:8%;animation-delay:-5s}
-@keyframes mxFloat{0%,100%{transform:translate3d(0,0,20px) rotateX(7deg) rotateY(-8deg)}
-50%{transform:translate3d(0,-22px,65px) rotateX(-8deg) rotateY(10deg)}}
-.mx-glow{position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(80px);opacity:.16;pointer-events:none}
-.mx-glow.a{background:#536dff;left:-160px;top:130px}.mx-glow.b{background:#d14dff;right:-170px;top:80px}
-.hero h1{background:linear-gradient(110deg,#111 20%,#5865f2 48%,#111 75%);background-size:220% auto;
--webkit-background-clip:text;background-clip:text;color:transparent;animation:mxShine 7s linear infinite}
-@keyframes mxShine{to{background-position:220% center}}
-.mx-live{max-width:720px;margin:42px auto 0;padding:18px;border:1px solid rgba(0,0,0,.08);border-radius:24px;
-background:rgba(255,255,255,.62);box-shadow:0 28px 80px rgba(35,35,70,.12);backdrop-filter:blur(22px);
-transform-style:preserve-3d;transition:transform .18s ease}
-.mx-live-top{display:flex;align-items:center;gap:7px;margin-bottom:14px}.mx-dot{width:9px;height:9px;border-radius:50%;background:#d7d7db}
-.mx-editor{text-align:left;padding:18px 20px;border-radius:16px;background:rgba(246,246,248,.86);font-size:22px;min-height:64px}
-.mx-cursor{display:inline-block;width:2px;height:1.15em;background:#111;vertical-align:-3px;animation:blink .8s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-.mx-candidates{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;text-align:left}
-.mx-candidate{padding:8px 11px;border-radius:10px;background:#fff;border:1px solid #e8e8eb;font-size:13px}
-.mx-candidate.active{background:#111;color:#fff;border-color:#111}
-.reveal{opacity:0;transform:translateY(35px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
-.reveal.visible{opacity:1;transform:none}
-.feature,.download-card,.release-card,.smart-action,.demo{transition:transform .25s ease,box-shadow .25s ease;transform-style:preserve-3d}
-.mx-particles{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
-.mx-particle{position:absolute;width:5px;height:5px;border-radius:50%;background:#111;opacity:.055;animation:particle 14s linear infinite}
-@keyframes particle{from{transform:translateY(105vh) scale(.5)}to{transform:translateY(-10vh) scale(1.4)}}
-.primary-button,.nav-download{position:relative;overflow:hidden}
-.primary-button:after,.nav-download:after{content:"";position:absolute;inset:-80% -35%;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35),transparent 65%);
-transform:translateX(-70%) rotate(10deg);transition:transform .7s}.primary-button:hover:after,.nav-download:hover:after{transform:translateX(70%) rotate(10deg)}
-@media(max-width:760px){.mx-key{width:48px;height:48px;border-radius:13px;font-size:14px;opacity:.65}.mx-live{margin-top:30px}.mx-editor{font-size:18px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
-
 </style>
 </head>
 
@@ -884,19 +839,6 @@ transform:translateX(-70%) rotate(10deg);transition:transform .7s}.primary-butto
 <main>
 
 <section class="hero" id="home">
-<div class="mx-orbit" aria-hidden="true">
-  <div class="mx-glow a"></div><div class="mx-glow b"></div>
-  <div class="mx-key">M</div><div class="mx-key">Y</div><div class="mx-key">က</div><div class="mx-key">A</div><div class="mx-key">မြ</div>
-</div>
-<div class="mx-live" id="mxLive" aria-label="Interactive Myanglish typing demo">
-  <div class="mx-live-top"><i class="mx-dot"></i><i class="mx-dot"></i><i class="mx-dot"></i></div>
-  <div class="mx-editor"><span id="mxTyping"></span><span class="mx-cursor"></span></div>
-  <div class="mx-candidates" id="mxCandidates">
-    <span class="mx-candidate active">1&nbsp; မင်္ဂလာပါ</span>
-    <span class="mx-candidate">2&nbsp; mingalarpar</span>
-    <span class="mx-candidate">3&nbsp; မင်္ဂလာပါခင်ဗျာ</span>
-  </div>
-</div>
     <div class="hero-inner">
 
         <div class="eyebrow">
