@@ -65,6 +65,28 @@ jobs:
           Copy-Item "packaging/friend/uninstall.ps1" $package -Force
           Copy-Item "packaging/friend/README_FIRST.txt" $package -Force
 
+          # The TSF COM registration writes system-wide registry entries.
+          # Auto-elevate the friend installer so regsvr32 does not fail with access denied (code 5).
+          $installPs1 = Join-Path $package "install.ps1"
+          $originalInstall = Get-Content -LiteralPath $installPs1 -Raw
+          $elevationPrefix = @'
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $isAdmin) {
+    Write-Host "Administrator permission is required. Opening the UAC prompt..."
+    $args = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    try {
+        $elevated = Start-Process -FilePath "powershell.exe" -ArgumentList $args -Verb RunAs -Wait -PassThru
+        exit $elevated.ExitCode
+    } catch {
+        Write-Error "Administrator permission was not granted."
+        exit 5
+    }
+}
+'@
+          Set-Content -LiteralPath $installPs1 -Value ($elevationPrefix + "`r`n" + $originalInstall) -Encoding UTF8
+
           Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $dist "Myanglish-Friend-Package-3a8f496.zip") -Force
 
       - name: Publish stable friend release
