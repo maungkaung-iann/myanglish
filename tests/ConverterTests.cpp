@@ -315,6 +315,56 @@ int main() {
             }
         }
 
+        // 2026-09-29 user-requested rules and exact/case-sensitive mappings.
+        const auto nhyapCandidates = converter.getCandidates("nhyap", 9);
+        tests.expectTrue(!nhyapCandidates.empty(), "nhyap candidates exist");
+        if (!nhyapCandidates.empty()) {
+            tests.expectEqual(nhyapCandidates[0].burmese, u8"ညှပ်", "nhyap first -> ညှပ်");
+        }
+
+        const auto mhyrUpperCandidates = converter.getCandidates("Mhyr", 9);
+        tests.expectTrue(!mhyrUpperCandidates.empty(), "Mhyr candidates exist");
+        if (!mhyrUpperCandidates.empty()) {
+            tests.expectEqual(mhyrUpperCandidates[0].burmese, u8"မျှား", "Mhyr first -> မျှား");
+        }
+        tests.expectEqual(converter.getCandidates("mhyr", 1)[0].burmese, u8"မြှား", "mhyr -> မြှား");
+        tests.expectEqual(converter.getCandidates("mhyar", 1)[0].burmese, u8"မြှား", "mhyar -> မြှား");
+
+        const auto upperP = converter.getCandidates("P", 9);
+        tests.expectTrue(upperP.size() >= 3, "P has three requested candidates");
+        if (upperP.size() >= 3) {
+            tests.expectEqual(upperP[0].burmese, u8"ပြီး", "P first -> ပြီး");
+            tests.expectEqual(upperP[1].burmese, u8"ဘီ", "P second -> ဘီ");
+            tests.expectEqual(upperP[2].burmese, u8"ပြီ", "P third -> ပြီ");
+        }
+
+        const auto upperB = converter.getCandidates("B", 9);
+        tests.expectTrue(upperB.size() >= 3, "B has three requested candidates");
+        if (upperB.size() >= 3) {
+            tests.expectEqual(upperB[0].burmese, u8"ပြီ", "B first -> ပြီ");
+            tests.expectEqual(upperB[1].burmese, u8"ပီ", "B second -> ပီ");
+            tests.expectEqual(upperB[2].burmese, u8"ဘီ", "B third -> ဘီ");
+        }
+
+        tests.expectEqual(converter.getCandidates("okay", 1)[0].burmese, u8"အိုကေ", "okay -> အိုကေ");
+        tests.expectEqual(converter.getCandidates("pb", 1)[0].burmese, u8"ပြီးပြီ", "pb -> ပြီးပြီ");
+        tests.expectEqual(converter.getCandidates("dr", 1)[0].burmese, u8"တာ", "dr first -> တာ");
+        tests.expectEqual(converter.getCandidates("kwl", 1)[0].burmese, u8"ခွဲ", "kwl first -> ခွဲ");
+
+        const auto swayUpper = converter.getCandidates("Sway", 9);
+        tests.expectTrue(!swayUpper.empty(), "Sway candidates exist");
+        if (!swayUpper.empty()) {
+            tests.expectEqual(swayUpper[0].burmese, u8"ဆွေ", "Sway first -> ဆွေ");
+        }
+        tests.expectEqual(converter.getCandidates("sway", 1)[0].burmese, u8"ဆွေး", "sway -> ဆွေး");
+
+        const auto swaeUpper = converter.getCandidates("Swae", 9);
+        tests.expectTrue(swaeUpper.size() >= 2, "Swae has two requested candidates");
+        if (swaeUpper.size() >= 2) {
+            tests.expectEqual(swaeUpper[0].burmese, u8"ဆွေ", "Swae first -> ဆွေ");
+            tests.expectEqual(swaeUpper[1].burmese, u8"ဆွေး", "Swae second -> ဆွေး");
+        }
+
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
         if (unknownCandidates.size() == 1) {
