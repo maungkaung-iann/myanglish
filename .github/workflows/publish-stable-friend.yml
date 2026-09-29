@@ -20,13 +20,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Check out current wrapper scripts
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: wrapper
+
       - name: Check out stable checkpoint
         uses: actions/checkout@v4
         with:
           ref: ${{ env.STABLE_SHA }}
+          path: stable
 
       - name: Configure x64 Release build
-        run: cmake -S . -B build-stable -A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+        run: cmake -S stable -B build-stable -A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 
       - name: Build installer and tests
         run: cmake --build build-stable --config Release --target MyanglishSetup MyanglishTests
@@ -35,7 +42,7 @@ jobs:
         continue-on-error: true
         run: ctest --test-dir build-stable -C Release --output-on-failure
 
-      - name: Assemble friend package
+      - name: Assemble stable friend package
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -58,34 +65,13 @@ jobs:
             Copy-Item $settings $package -Force
           }
 
-          Copy-Item "data" (Join-Path $package "data") -Recurse -Force
-          Copy-Item "packaging/friend/install.cmd" $package -Force
-          Copy-Item "packaging/friend/install.ps1" $package -Force
-          Copy-Item "packaging/friend/uninstall.cmd" $package -Force
-          Copy-Item "packaging/friend/uninstall.ps1" $package -Force
-          Copy-Item "packaging/friend/README_FIRST.txt" $package -Force
+          Copy-Item "stable/data" (Join-Path $package "data") -Recurse -Force
 
-          # The TSF COM registration writes system-wide registry entries.
-          # Auto-elevate the friend installer so regsvr32 does not fail with access denied (code 5).
-          $installPs1 = Join-Path $package "install.ps1"
-          $originalInstall = Get-Content -LiteralPath $installPs1 -Raw
-          $elevationPrefix = @'
-$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-$isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-if (-not $isAdmin) {
-    Write-Host "Administrator permission is required. Opening the UAC prompt..."
-    $args = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    try {
-        $elevated = Start-Process -FilePath "powershell.exe" -ArgumentList $args -Verb RunAs -Wait -PassThru
-        exit $elevated.ExitCode
-    } catch {
-        Write-Error "Administrator permission was not granted."
-        exit 5
-    }
-}
-'@
-          Set-Content -LiteralPath $installPs1 -Value ($elevationPrefix + "`r`n" + $originalInstall) -Encoding UTF8
+          Copy-Item "wrapper/packaging/friend/install.cmd" $package -Force
+          Copy-Item "wrapper/packaging/friend/install.ps1" $package -Force
+          Copy-Item "wrapper/packaging/friend/uninstall.cmd" $package -Force
+          Copy-Item "wrapper/packaging/friend/uninstall.ps1" $package -Force
+          Copy-Item "wrapper/packaging/friend/README_FIRST.txt" $package -Force
 
           Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $dist "Myanglish-Friend-Package-3a8f496.zip") -Force
 
@@ -98,7 +84,7 @@ if (-not $isAdmin) {
 
           gh release view $env:RELEASE_TAG *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-3a8f496.zip" --target $env:STABLE_SHA --title "Myanglish Stable 3a8f496" --notes "Stable friend-share build from checkpoint 3a8f496. Download MyanglishInstaller.exe for the easiest installation."
+            gh release create $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-3a8f496.zip" --target $env:STABLE_SHA --title "Myanglish Stable 3a8f496" --notes "Stable friend-share build from checkpoint 3a8f496. For friend testing, use Myanglish-Friend-Package-3a8f496.zip and run install.cmd."
           } else {
             gh release upload $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-3a8f496.zip" --clobber
           }
