@@ -1,5 +1,20 @@
 $ErrorActionPreference = "Stop"
 
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $isAdmin) {
+    Write-Host "Administrator permission is required. Opening the Windows UAC prompt..."
+    try {
+        $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+        $elevated = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -Verb RunAs -Wait -PassThru
+        exit $elevated.ExitCode
+    } catch {
+        Write-Error "Administrator permission was not granted."
+        exit 5
+    }
+}
+
 try {
     $installRoot = Join-Path $env:LOCALAPPDATA "MyanglishIME\R1.16"
     $installedDll = Join-Path $installRoot "MyanglishIME.dll"
@@ -16,7 +31,7 @@ try {
         Remove-Item -LiteralPath $installRoot -Recurse -Force
     }
 
-    Write-Host "Myanglish IME R1.16 uninstalled successfully." -ForegroundColor Green
+    Write-Host "Myanglish IME uninstalled successfully." -ForegroundColor Green
     exit 0
 } catch {
     Write-Error $_
