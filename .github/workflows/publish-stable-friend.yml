@@ -1,0 +1,81 @@
+name: Publish stable friend build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/publish-stable-friend.yml
+
+permissions:
+  contents: write
+
+env:
+  STABLE_SHA: 3a8f4969b77ad1152f5f9acbff12cc2263658e5a
+  RELEASE_TAG: stable-3a8f496
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out stable checkpoint
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.STABLE_SHA }}
+
+      - name: Configure x64 Release build
+        run: cmake -S . -B build-stable -A x64 -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      - name: Build installer and tests
+        run: cmake --build build-stable --config Release --target MyanglishSetup MyanglishTests
+
+      - name: Run converter tests
+        run: ctest --test-dir build-stable -C Release --output-on-failure
+
+      - name: Assemble friend package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $dist = Join-Path $PWD "dist"
+          $package = Join-Path $PWD "friend-package"
+          New-Item -ItemType Directory -Force $dist | Out-Null
+          New-Item -ItemType Directory -Force $package | Out-Null
+
+          $installer = "build-stable/Release/MyanglishInstaller.exe"
+          if (!(Test-Path $installer)) {
+            throw "MyanglishInstaller.exe was not produced."
+          }
+          Copy-Item $installer (Join-Path $dist "MyanglishInstaller.exe") -Force
+
+          Copy-Item "build-stable/Release/MyanglishIME.dll" $package -Force
+
+          $settings = "build-stable/Release/MyanglishSettings.exe"
+          if (Test-Path $settings) {
+            Copy-Item $settings $package -Force
+          }
+
+          Copy-Item "data" (Join-Path $package "data") -Recurse -Force
+          Copy-Item "packaging/friend/install.cmd" $package -Force
+          Copy-Item "packaging/friend/install.ps1" $package -Force
+          Copy-Item "packaging/friend/uninstall.cmd" $package -Force
+          Copy-Item "packaging/friend/uninstall.ps1" $package -Force
+          Copy-Item "packaging/friend/README_FIRST.txt" $package -Force
+
+          Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $dist "Myanglish-Friend-Package-3a8f496.zip") -Force
+
+      - name: Publish stable friend release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          gh release view $env:RELEASE_TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-3a8f496.zip" --target $env:STABLE_SHA --title "Myanglish Stable 3a8f496" --notes "Stable friend-share build from checkpoint 3a8f496. Download MyanglishInstaller.exe for the easiest installation."
+          } else {
+            gh release upload $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-3a8f496.zip" --clobber
+          }
