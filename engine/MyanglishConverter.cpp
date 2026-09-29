@@ -1081,10 +1081,10 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
 
     // Productive s-family rule: Myanglish words beginning with s should
     // expose both Burmese စ- and ဆ- spellings whenever either one exists.
-    // Keep the original candidate first, then place its paired spelling
-    // immediately after it. Exact dictionary ranking therefore stays useful.
+    // Preserve every existing candidate and its ranking first; append only
+    // missing paired spellings afterwards so stable candidate order is not broken.
     if (startsWith(normalizedInput, "s")) {
-        std::vector<Candidate> paired;
+        std::vector<Candidate> paired = ordered;
         paired.reserve(ordered.size() * 2);
 
         auto appendPairedUnique = [&](const Candidate& candidate) {
@@ -1104,8 +1104,6 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         static const std::string hsa = "ဆ";
 
         for (const auto& candidate : ordered) {
-            appendPairedUnique(candidate);
-
             Candidate alternate = candidate;
             if (startsWith(candidate.burmese, sa)) {
                 alternate.burmese = hsa + candidate.burmese.substr(sa.size());

@@ -366,19 +366,27 @@ int main() {
 
         const auto swayCandidates = converter.getCandidates("sway", 9);
         tests.expectTrue(swayCandidates.size() >= 3, "sway keeps စ/ဆ family candidates");
-        if (swayCandidates.size() >= 3) {
+        if (!swayCandidates.empty()) {
             tests.expectEqual(swayCandidates[0].burmese, u8"စွေး", "sway first -> စွေး");
-            tests.expectEqual(swayCandidates[1].burmese, u8"ဆွေး", "sway second -> ဆွေး");
-            tests.expectEqual(swayCandidates[2].burmese, u8"ဆွေ", "sway third -> ဆွေ");
         }
+        tests.expectTrue(
+            containsCandidate(swayCandidates, u8"စွေး")
+                && containsCandidate(swayCandidates, u8"ဆွေး")
+                && containsCandidate(swayCandidates, u8"ဆွေ"),
+            "sway contains requested စ/ဆ candidates"
+        );
 
         const auto swaeCandidates = converter.getCandidates("swae", 9);
         tests.expectTrue(swaeCandidates.size() >= 3, "swae keeps စ/ဆ family candidates");
-        if (swaeCandidates.size() >= 3) {
+        if (!swaeCandidates.empty()) {
             tests.expectEqual(swaeCandidates[0].burmese, u8"စွေး", "swae first -> စွေး");
-            tests.expectEqual(swaeCandidates[1].burmese, u8"ဆွေး", "swae second -> ဆွေး");
-            tests.expectEqual(swaeCandidates[2].burmese, u8"ဆွေ", "swae third -> ဆွေ");
         }
+        tests.expectTrue(
+            containsCandidate(swaeCandidates, u8"စွေး")
+                && containsCandidate(swaeCandidates, u8"ဆွေး")
+                && containsCandidate(swaeCandidates, u8"ဆွေ"),
+            "swae contains requested စ/ဆ candidates"
+        );
 
         const auto tCandidates = converter.getCandidates("t", 9);
         tests.expectTrue(tCandidates.size() >= 2, "t lowercase shortcut candidates exist");
