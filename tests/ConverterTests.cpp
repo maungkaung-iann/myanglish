@@ -437,6 +437,44 @@ int main() {
             "generic s-family pairing works for saw"
         );
 
+        // 2026-09-30 user-requested word candidates.
+        const std::vector<std::pair<std::string, std::vector<std::string>>> requestedWordCandidates = {
+            {"nyoe", {u8"ငြှိုး", u8"ညှိုး"}},
+            {"nhyoe", {u8"ညှိုး", u8"ငြှိုး"}},
+            {"yak", {u8"လျှပ်", u8"လျပ်", u8"လျက်", u8"လျှက်"}},
+            {"lhin", {u8"လျှင်", u8"လျင်"}},
+            {"hlin", {u8"လျှင်", u8"လျင်"}},
+            {"shap", {u8"လျှပ်"}},
+            {"hlyak", {u8"လျှပ်", u8"လျက်"}},
+            {"hlyap", {u8"လျပ်"}},
+            {"hlap", {u8"လျှပ်", u8"လျပ်"}},
+            {"hlak", {u8"လျှပ်", u8"လျက်"}},
+            {"hlyk", {u8"လျက်"}},
+            {"hlyn", {u8"လျှင်", u8"လျင်"}},
+            {"hlyin", {u8"လျှင်", u8"လျင်"}},
+            {"yin", {u8"လျင်"}},
+            {"lyin", {u8"လျှင်", u8"လျင်"}},
+            {"yor", {u8"လျှော်", u8"လျော်"}},
+            {"shor", {u8"လျော", u8"လျှော"}},
+            {"york", {u8"လျှော့", u8"လျော့"}},
+        };
+
+        for (const auto& [input, expectedOutputs] : requestedWordCandidates) {
+            const auto candidates = converter.getCandidates(input, 20);
+            tests.expectTrue(
+                candidates.size() >= expectedOutputs.size(),
+                input + " requested candidates exist"
+            );
+            const std::size_t checked = std::min(candidates.size(), expectedOutputs.size());
+            for (std::size_t i = 0; i < checked; ++i) {
+                tests.expectEqual(
+                    candidates[i].burmese,
+                    expectedOutputs[i],
+                    input + " candidate " + std::to_string(i + 1)
+                );
+            }
+        }
+
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
         if (unknownCandidates.size() == 1) {
