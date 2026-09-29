@@ -382,6 +382,14 @@ int main() {
             tests.expectEqual(sCandidates[3].burmese, u8"စောင့်", "s fourth -> စောင့်");
         }
 
+        // User-requested s-family candidates: keep both စ/ဆ families available.
+        tests.expectEqual(converter.getCandidates("sway", 1)[0].burmese, u8"စွေး", "sway first -> စွေး");
+        tests.expectEqual(converter.getCandidates("swae", 1)[0].burmese, u8"စွေး", "swae first -> စွေး");
+        tests.expectEqual(converter.getCandidates("swel", 1)[0].burmese, u8"စွဲ", "swel first -> စွဲ");
+        tests.expectEqual(converter.getCandidates("swr", 1)[0].burmese, u8"ဆွာ", "swr first -> ဆွာ");
+        tests.expectEqual(converter.getCandidates("sane", 1)[0].burmese, u8"ဆိမ်း", "sane first -> ဆိမ်း");
+        tests.expectEqual(converter.getCandidates("sam", 1)[0].burmese, u8"ဆန်း", "sam first -> ဆန်း");
+
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
         if (unknownCandidates.size() == 1) {
