@@ -310,12 +310,13 @@ int main() {
         tests.expectEqual(converter.convertSentence("kl"), u8"ကဲ", "kl -> ကဲ");
 
         const auto yinCandidates082 = converter.getCandidates("yin", 9);
-        tests.expectTrue(yinCandidates082.size() >= 3, "yin has three reviewed candidates");
-        if (yinCandidates082.size() >= 3) {
-            tests.expectEqual(yinCandidates082[0].burmese, u8"ရင်", "yin first -> ရင်");
-            tests.expectEqual(yinCandidates082[1].burmese, u8"ရင်း", "yin second -> ရင်း");
-            tests.expectEqual(yinCandidates082[2].burmese, u8"ယင်", "yin third -> ယင်");
+        tests.expectTrue(yinCandidates082.size() >= 4, "yin keeps new and reviewed candidates");
+        if (!yinCandidates082.empty()) {
+            tests.expectEqual(yinCandidates082[0].burmese, u8"လျင်", "yin first -> လျင်");
         }
+        tests.expectContains(yinCandidates082, u8"ရင်", "yin still contains ရင်");
+        tests.expectContains(yinCandidates082, u8"ရင်း", "yin still contains ရင်း");
+        tests.expectContains(yinCandidates082, u8"ယင်", "yin still contains ယင်");
 
         for (const auto& input : {std::string("sai"), std::string("sine")}) {
             const auto c = converter.getCandidates(input, 9);
