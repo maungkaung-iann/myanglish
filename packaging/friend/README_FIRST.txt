@@ -1,22 +1,27 @@
-MYANGLISH IME R1.16 - FRIEND TEST
-================================
+MYANGLISH IME - STABLE FRIEND PACKAGE
+Checkpoint: 3a8f496
+==========================================
 
 INSTALL
-1. Extract the ZIP completely.
+1. Extract this ZIP completely.
 2. Double-click install.cmd.
-3. When it says installation completed, press Win + Space.
-4. Choose Myanglish IME.
+3. Windows will ask for Administrator permission. Choose Yes.
+4. Wait until "Installation completed" appears.
+5. Press Win + Space and choose Myanglish IME.
 
 UNINSTALL
-1. Double-click uninstall.cmd from this extracted folder.
+1. Double-click uninstall.cmd.
+2. Approve the Windows Administrator prompt.
 
 IMPORTANT
-- Windows may show a warning because this free test build is not code-signed.
+- This package is built from stable checkpoint 3a8f496.
+- Windows may show a reputation/signing warning because this test build is not code-signed.
 - Do not disable Windows Security.
 - Only use this package if it came directly from the Myanglish developer.
 
 မြန်မာလို
 1. ZIP ကို အရင်ဖြည်ပါ။
 2. install.cmd ကို double-click လုပ်ပါ။
-3. ပြီးသွားရင် Win + Space နှိပ်ပြီး Myanglish IME ကိုရွေးပါ။
-4. ပြန်ဖြုတ်ချင်ရင် uninstall.cmd ကို double-click လုပ်ပါ။
+3. Administrator permission မေးလာရင် Yes ကိုနှိပ်ပါ။
+4. Installation completed ပေါ်လာတဲ့အထိ စောင့်ပါ။
+5. ပြီးသွားရင် Win + Space နှိပ်ပြီး Myanglish IME ကိုရွေးပါ။
