@@ -16,6 +16,19 @@ std::filesystem::path testDictionaryPath() {
     return std::filesystem::path(MYANGLISHIME_SOURCE_DIR) / "tests" / "test_data.csv";
 }
 
+bool containsCandidate(
+    const std::vector<myanglish::Candidate>& candidates,
+    const std::string& expected
+) {
+    return std::any_of(
+        candidates.begin(),
+        candidates.end(),
+        [&](const myanglish::Candidate& candidate) {
+            return candidate.burmese == expected;
+        }
+    );
+}
+
 struct TestSuite {
     int passed = 0;
     int failed = 0;
