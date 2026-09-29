@@ -1371,12 +1371,20 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
     if (isAsciiLetter(keyCode)) {
         const bool shiftHeldForLetter = (GetKeyState(VK_SHIFT) < 0);
 
-        // Lexicon Pack 2: Shift+T at the START of a fresh word is the
-        // case-sensitive T shortcut, not a stack request. Shift+letters while
-        // a word/candidate is already active keep the existing stack behavior.
+        // Case-sensitive shortcuts at the START of a fresh word.
+        // T is the existing shortcut; M/P/B/S are user-requested additions.
+        // Shift+letters while a word/candidate is already active keep the
+        // existing stack behavior.
+        const bool isCaseSensitiveShortcutStart =
+            keyCode == 'T' ||
+            keyCode == 'M' ||
+            keyCode == 'P' ||
+            keyCode == 'B' ||
+            keyCode == 'S';
+
         if (
             shiftHeldForLetter &&
-            keyCode == 'T' &&
+            isCaseSensitiveShortcutStart &&
             !conversionActive_ &&
             !candidateSelectionActive_ &&
             !compositionManager_.hasBufferedText()
@@ -1384,11 +1392,14 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             stackMode_ = false;
             compositionManager_.setStackPrefixEnabled(false);
             const HRESULT shortcutHr =
-                compositionManager_.insertCharacter(context, 'T');
+                compositionManager_.insertCharacter(
+                    context,
+                    static_cast<wchar_t>(keyCode)
+                );
             if (SUCCEEDED(shortcutHr)) {
                 refreshCandidateWindow();
             }
-            return recover(shortcutHr, "insert uppercase T shortcut");
+            return recover(shortcutHr, "insert case-sensitive uppercase shortcut");
         }
 
         if (conversionActive_ || candidateSelectionActive_) {
