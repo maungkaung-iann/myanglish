@@ -1079,6 +1079,46 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         return {Candidate{originalInput, 0}};
     }
 
+    // Productive s-family rule: Myanglish words beginning with s should
+    // expose both Burmese စ- and ဆ- spellings whenever either one exists.
+    // Keep the original candidate first, then place its paired spelling
+    // immediately after it. Exact dictionary ranking therefore stays useful.
+    if (startsWith(normalizedInput, "s")) {
+        std::vector<Candidate> paired;
+        paired.reserve(ordered.size() * 2);
+
+        auto appendPairedUnique = [&](const Candidate& candidate) {
+            const bool duplicate = std::any_of(
+                paired.begin(),
+                paired.end(),
+                [&](const Candidate& existing) {
+                    return existing.burmese == candidate.burmese;
+                }
+            );
+            if (!duplicate) {
+                paired.push_back(candidate);
+            }
+        };
+
+        static const std::string sa = "စ";
+        static const std::string hsa = "ဆ";
+
+        for (const auto& candidate : ordered) {
+            appendPairedUnique(candidate);
+
+            Candidate alternate = candidate;
+            if (startsWith(candidate.burmese, sa)) {
+                alternate.burmese = hsa + candidate.burmese.substr(sa.size());
+                appendPairedUnique(alternate);
+            } else if (startsWith(candidate.burmese, hsa)) {
+                alternate.burmese = sa + candidate.burmese.substr(hsa.size());
+                appendPairedUnique(alternate);
+            }
+        }
+
+        ordered = std::move(paired);
+    }
+
     if (ordered.size() > limit) {
         ordered.resize(limit);
     }

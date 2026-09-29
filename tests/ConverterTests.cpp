@@ -352,17 +352,19 @@ int main() {
         tests.expectEqual(converter.getCandidates("kwl", 1)[0].burmese, u8"ခွဲ", "kwl first -> ခွဲ");
 
         const auto swayCandidates = converter.getCandidates("sway", 9);
-        tests.expectTrue(swayCandidates.size() >= 2, "sway has both requested lowercase candidates");
-        if (swayCandidates.size() >= 2) {
-            tests.expectEqual(swayCandidates[0].burmese, u8"ဆွေ", "sway first -> ဆွေ");
+        tests.expectTrue(swayCandidates.size() >= 3, "sway keeps စ/ဆ family candidates");
+        if (swayCandidates.size() >= 3) {
+            tests.expectEqual(swayCandidates[0].burmese, u8"စွေး", "sway first -> စွေး");
             tests.expectEqual(swayCandidates[1].burmese, u8"ဆွေး", "sway second -> ဆွေး");
+            tests.expectEqual(swayCandidates[2].burmese, u8"ဆွေ", "sway third -> ဆွေ");
         }
 
         const auto swaeCandidates = converter.getCandidates("swae", 9);
-        tests.expectTrue(swaeCandidates.size() >= 2, "swae has two requested lowercase candidates");
-        if (swaeCandidates.size() >= 2) {
-            tests.expectEqual(swaeCandidates[0].burmese, u8"ဆွေ", "swae first -> ဆွေ");
+        tests.expectTrue(swaeCandidates.size() >= 3, "swae keeps စ/ဆ family candidates");
+        if (swaeCandidates.size() >= 3) {
+            tests.expectEqual(swaeCandidates[0].burmese, u8"စွေး", "swae first -> စွေး");
             tests.expectEqual(swaeCandidates[1].burmese, u8"ဆွေး", "swae second -> ဆွေး");
+            tests.expectEqual(swaeCandidates[2].burmese, u8"ဆွေ", "swae third -> ဆွေ");
         }
 
         const auto tCandidates = converter.getCandidates("t", 9);
@@ -382,13 +384,37 @@ int main() {
             tests.expectEqual(sCandidates[3].burmese, u8"စောင့်", "s fourth -> စောင့်");
         }
 
-        // User-requested s-family candidates: keep both စ/ဆ families available.
-        tests.expectEqual(converter.getCandidates("sway", 1)[0].burmese, u8"စွေး", "sway first -> စွေး");
-        tests.expectEqual(converter.getCandidates("swae", 1)[0].burmese, u8"စွေး", "swae first -> စွေး");
-        tests.expectEqual(converter.getCandidates("swel", 1)[0].burmese, u8"စွဲ", "swel first -> စွဲ");
-        tests.expectEqual(converter.getCandidates("swr", 1)[0].burmese, u8"ဆွာ", "swr first -> ဆွာ");
-        tests.expectEqual(converter.getCandidates("sane", 1)[0].burmese, u8"ဆိမ်း", "sane first -> ဆိမ်း");
-        tests.expectEqual(converter.getCandidates("sam", 1)[0].burmese, u8"ဆန်း", "sam first -> ဆန်း");
+        // Productive s-family rule: each requested example exposes both စ/ဆ forms.
+        const auto swelCandidates = converter.getCandidates("swel", 9);
+        tests.expectTrue(
+            containsCandidate(swelCandidates, u8"စွဲ") && containsCandidate(swelCandidates, u8"ဆွဲ"),
+            "swel contains both စွဲ and ဆွဲ"
+        );
+
+        const auto swrCandidates = converter.getCandidates("swr", 9);
+        tests.expectTrue(
+            containsCandidate(swrCandidates, u8"ဆွာ") && containsCandidate(swrCandidates, u8"စွာ"),
+            "swr contains both ဆွာ and စွာ"
+        );
+
+        const auto saneCandidates = converter.getCandidates("sane", 9);
+        tests.expectTrue(
+            containsCandidate(saneCandidates, u8"ဆိမ်း") && containsCandidate(saneCandidates, u8"စိမ်း"),
+            "sane contains both ဆိမ်း and စိမ်း"
+        );
+
+        const auto samCandidates = converter.getCandidates("sam", 9);
+        tests.expectTrue(
+            containsCandidate(samCandidates, u8"ဆန်း") && containsCandidate(samCandidates, u8"စန်း"),
+            "sam contains both ဆန်း and စန်း"
+        );
+
+        // Check the rule itself, not only the hand-entered example rows.
+        const auto sawCandidates = converter.getCandidates("saw", 9);
+        tests.expectTrue(
+            containsCandidate(sawCandidates, u8"စော") && containsCandidate(sawCandidates, u8"ဆော"),
+            "generic s-family pairing works for saw"
+        );
 
         const auto unknownCandidates = converter.getCandidates("unknownword");
         tests.expectEqualSize(unknownCandidates.size(), 1, "Unknown candidate fallback size");
