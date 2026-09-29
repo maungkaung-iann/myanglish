@@ -943,57 +943,9 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         return {};
     }
 
-    // Lexicon Pack 2: uppercase T is a deliberate shortcut.
-    // TextService preserves uppercase T only when Shift+T starts a fresh word.
-    if (trimmedInput == "T") {
-        return {
-            Candidate{"သည်", 1000000},
-            Candidate{"တယ်", 999000}
-        };
-    }
-    if (trimmedInput == "Ta") {
-        return {Candidate{"တစ်", 1000000}};
-    }
-
-    // User-requested case-sensitive shortcuts. These must stay above the
-    // lowercase-normalized dictionary path so Mhyr/P/B/Sway/Swae remain
-    // distinct from mhyr/p/b/sway/swae.
-    if (trimmedInput == "Mhyr") {
-        return {Candidate{"မျှား", 2000000}};
-    }
-    if (trimmedInput == "P") {
-        return {
-            Candidate{"ပြီး", 2000000},
-            Candidate{"ဘီ", 1999000},
-            Candidate{"ပြီ", 1998000}
-        };
-    }
-    if (trimmedInput == "B") {
-        return {
-            Candidate{"ပြီ", 2000000},
-            Candidate{"ပီ", 1999000},
-            Candidate{"ဘီ", 1998000}
-        };
-    }
-    if (trimmedInput == "Sway") {
-        return {Candidate{"ဆွေ", 2000000}};
-    }
-    if (trimmedInput == "Swae") {
-        return {
-            Candidate{"ဆွေ", 2000000},
-            Candidate{"ဆွေး", 1999000}
-        };
-    }
-
-    if (trimmedInput == "S") {
-        return {
-            Candidate{"ဆောက်", 1400000},
-            Candidate{"စောက်", 1390000},
-            Candidate{"ဆောင့်", 1380000},
-            Candidate{"စောင့်", 1370000}
-        };
-    }
-
+    // All Myanglish conversion keys are lowercase/case-insensitive.
+    // Requested shortcuts live in the lowercase dictionary instead of
+    // depending on Shift or uppercase input.
     const bool hasExactCoreMapping = !dictionary_.findEntries(normalizedInput).empty();
 
     // Alpha 0.10.1: user-confirmed exact-only key.
