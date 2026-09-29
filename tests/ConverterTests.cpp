@@ -310,9 +310,10 @@ int main() {
         tests.expectEqual(converter.convertSentence("kl"), u8"ကဲ", "kl -> ကဲ");
 
         const auto yinCandidates082 = converter.getCandidates("yin", 9);
-        tests.expectTrue(yinCandidates082.size() >= 4, "yin keeps new and reviewed candidates");
-        if (!yinCandidates082.empty()) {
-            tests.expectEqual(yinCandidates082[0].burmese, u8"လျင်", "yin first -> လျင်");
+        tests.expectTrue(yinCandidates082.size() >= 5, "yin keeps new and reviewed candidates");
+        if (yinCandidates082.size() >= 2) {
+            tests.expectEqual(yinCandidates082[0].burmese, u8"လျှင်", "yin first -> လျှင်");
+            tests.expectEqual(yinCandidates082[1].burmese, u8"လျင်", "yin second -> လျင်");
         }
         tests.expectContains(yinCandidates082, u8"ရင်", "yin still contains ရင်");
         tests.expectContains(yinCandidates082, u8"ရင်း", "yin still contains ရင်း");
@@ -442,22 +443,24 @@ int main() {
         const std::vector<std::pair<std::string, std::vector<std::string>>> requestedWordCandidates = {
             {"nyoe", {u8"ငြှိုး", u8"ညှိုး"}},
             {"nhyoe", {u8"ညှိုး", u8"ငြှိုး"}},
+            {"nhyo", {u8"ငြှိုး"}},
             {"yak", {u8"လျှပ်", u8"လျပ်", u8"လျက်", u8"လျှက်"}},
             {"lhin", {u8"လျှင်", u8"လျင်"}},
             {"hlin", {u8"လျှင်", u8"လျင်"}},
-            {"shap", {u8"လျှပ်"}},
-            {"hlyak", {u8"လျှပ်", u8"လျက်"}},
-            {"hlyap", {u8"လျပ်"}},
-            {"hlap", {u8"လျှပ်", u8"လျပ်"}},
-            {"hlak", {u8"လျှပ်", u8"လျက်"}},
-            {"hlyk", {u8"လျက်"}},
+            {"shap", {u8"လျှပ်", u8"လျပ်"}},
+            {"hlyak", {u8"လျှက်", u8"လျက်", u8"လျှပ်", u8"လျပ်"}},
+            {"hlyap", {u8"လျှပ်", u8"လျပ်", u8"လျှက်", u8"လျက်"}},
+            {"hlap", {u8"လျှပ်", u8"လျပ်", u8"လျှက်", u8"လျက်"}},
+            {"hlak", {u8"လျှက်", u8"လျက်", u8"လျှပ်", u8"လျပ်"}},
+            {"hlyk", {u8"လျှက်", u8"လျက်", u8"လျှပ်", u8"လျပ်"}},
             {"hlyn", {u8"လျှင်", u8"လျင်"}},
             {"hlyin", {u8"လျှင်", u8"လျင်"}},
-            {"yin", {u8"လျင်"}},
+            {"yin", {u8"လျှင်", u8"လျင်"}},
             {"lyin", {u8"လျှင်", u8"လျင်"}},
             {"yor", {u8"လျှော်", u8"လျော်"}},
             {"shor", {u8"လျော", u8"လျှော"}},
             {"york", {u8"လျှော့", u8"လျော့"}},
+            {"shork", {u8"လျှော့", u8"လျော့"}},
         };
 
         for (const auto& [input, expectedOutputs] : requestedWordCandidates) {
