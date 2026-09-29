@@ -19,9 +19,30 @@ a{color:inherit}.nav{position:fixed;z-index:100;top:0;left:0;right:0;height:68px
 footer{padding:70px 5vw}.footer{max-width:1200px;margin:auto;display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}.footer h3{font-size:26px;margin:0 0 12px}.footer p{color:#666}.flinks{display:flex;gap:20px;flex-wrap:wrap;font-size:13px}.flinks a{text-decoration:none}.copyright{max-width:1200px;margin:60px auto 0;padding-top:25px;border-top:1px solid #ddd;font-size:12px;color:#777}
 @media(max-width:760px){.navlinks a:not(.cta){display:none}.hero h1{font-size:clamp(60px,21vw,105px)}.cine{height:520vh}.space{height:72px;margin-top:50px}.section{padding:100px 22px}.section h2{margin-bottom:50px}.feature{grid-template-columns:52px 1fr;padding:45px 0}.keyboard{transform:perspective(900px) rotateX(42deg) scale(.9);width:115%;margin-left:-7.5%}.key{height:55px}.timeline{margin-left:12px}.step{grid-template-columns:45px 1fr;padding-left:20px}.editorial{min-height:100vh}.download{padding:120px 22px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.feature{opacity:1;transform:none}}
+
+/* ===== GLOBAL BLACK + WHITE SPOT THEME ===== */
+body{background:#000;color:#fff}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-color:#000;background-image:radial-gradient(circle,rgba(255,255,255,.24) 1px,transparent 1.35px);background-size:34px 34px}
+.nav,.nav.scrolled{color:#fff;background:rgba(0,0,0,.78);border-color:#242424}
+.nav .cta{background:#fff;color:#000}
+.hero,.section,footer{background:transparent;color:#fff}
+.hero p,.feature p,.footer p,.copyright,.meta{color:#aaa}
+.btn{border-color:#fff;color:#fff}.btn.primary{background:#fff;color:#000}
+.cine{background:#000}.stage{background:#000!important;color:#fff!important}
+.demo{background:#0b0b0b;border-color:#333}.editor{background:#050505;color:#fff;border-color:#333}
+.caret{background:#fff}.candidate{background:#090909;border-color:#444;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.candidate div{background:#090909!important;color:#fff!important;border-color:#282828}.candidate div:first-child{background:#fff!important;color:#000!important}
+.hint{color:#999}.features{background:transparent}.feature{border-color:#333}.feature p{color:#aaa}
+.timeline{border-color:#444}.download,.keyboard-sec,.editorial{background:transparent;color:#fff}
+footer{border-top:1px solid #222}.copyright{border-color:#222}
+@media(prefers-reduced-motion:reduce){body::before{position:absolute}}
+</style><style>
+#introSplash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#000;color:#fff;transition:opacity .55s ease,visibility .55s ease}
+#introSplash.hide{opacity:0;visibility:hidden;pointer-events:none}
+#introWord{font-size:clamp(58px,11vw,160px);font-weight:750;letter-spacing:-.065em}
 </style>
 </head>
-<body>
+<body><div id="introSplash" aria-hidden="true"><span id="introWord"></span></div>
 <nav class="nav" id="nav"><a class="brand" href="#">Myanglish</a><div class="navlinks"><a href="#try">Try</a><a href="#features">Features</a><a href="#install">Install</a><a href="#release">Release</a><a href="#support">Support</a><a class="cta" href="https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.11/MyanglishInstaller.exe">Download</a></div></nav>
 <header class="hero"><div class="hero-in"><div class="kicker">Burmese Input Method for Windows</div><h1>MYANGLISH</h1><h2>Myanglish လိုရိုက်<br>မြန်မာလိုထွက်</h2><p>Type Burmese naturally using the English keyboard and the Myanglish spelling you already know.</p><div class="actions"><a class="btn primary" href="https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.11/MyanglishInstaller.exe">Download for Windows</a><a class="btn" href="#cinematic">See how it works ↓</a></div><div class="meta">Windows 11 · x64 · Free</div></div></header>
 <section class="cine" id="cinematic"><div class="stage" id="stage"><div class="shock" id="shock"></div><div class="wordwrap"><div class="word" id="word"></div><div class="space" id="space">SPACE</div><div class="tagline" id="tagline">Myanglish လိုရိုက် · မြန်မာလိုထွက်</div></div></div></section>
@@ -33,6 +54,7 @@ footer{padding:70px 5vw}.footer{max-width:1200px;margin:auto;display:flex;justif
 <section class="download" id="release"><div class="max"><div class="micro">Current Release · Myanglish 1.0.11</div><h2>Ready to type Myanmar differently?</h2><a class="btn" href="https://github.com/maungkaung-iann/myanglish/releases/download/v1.0.11/MyanglishInstaller.exe">Download Myanglish for Windows</a><div class="meta">Windows 11　·　x64　·　Free</div></div></section>
 <footer id="support"><div class="footer"><div><h3>Myanglish</h3><p>Myanglish လိုရိုက် မြန်မာလိုထွက်</p></div><div class="flinks"><a href="#release">Download</a><a href="#features">Features</a><a href="#install">Installation</a><a href="#release">Release</a><a href="#support">Support</a><a href="https://github.com/maungkaung-iann/myanglish">GitHub</a></div></div><div class="copyright">Created by MAUNG KAUNG<br><br>© 2026 Myanglish</div></footer>
 <script>
+(()=>{const splash=document.getElementById("introSplash"),out=document.getElementById("introWord"),w="mingalarpar";let i=0;document.documentElement.style.overflow="hidden";const t=setInterval(()=>{out.textContent=w.slice(0,++i);if(i>=w.length){clearInterval(t);setTimeout(()=>{splash.classList.add("hide");document.documentElement.style.overflow="";setTimeout(()=>splash.remove(),650)},550)}},95)})();
 const features=[["Myanglish Typing","Type familiar romanized Burmese and convert it with Space."],["Smart Candidates","Choose the word you want from intelligent candidates."],["Learns Your Choices","Frequently selected words become easier to access."],["Fast Auto-Commit","Continue typing and Myanglish automatically confirms your selected word."],["English When You Need It","Keep the original English/Myanglish input available as a candidate."],["Smart Burmese + English Spacing","Keep mixed Burmese and English text naturally spaced."],["User Dictionary","Add names and words that are not yet included."],["Myanmar Punctuation","Type Myanmar punctuation from your familiar keyboard."],["Myanmar Numbers","Use familiar number keys for Myanmar numbers."],["Quick Language Switching","Move between Myanglish and English quickly."]];
 featureList.innerHTML=features.map((x,i)=>'<article class="feature"><div class="num">'+String(i+1).padStart(2,"0")+'</div><div><h3>'+x[0]+'</h3><p>'+x[1]+'</p></div></article>').join("");
 const steps=["Download Myanglish","Run MyanglishInstaller.exe","Choose “More info” if Windows SmartScreen appears","Choose “Run anyway”","Allow installation","Press Win + Space","Select Myanglish","Start typing"];
