@@ -99,7 +99,9 @@ const std::vector<BaseConsonantRule>& baseConsonantRules() {
     // One deterministic base mapping. Ambiguous real-world spellings belong
     // in dictionary/candidate data rather than duplicate equal-length rules.
     static const std::vector<BaseConsonantRule> rules = {
-        // Lexicon Pack 2: productive hn-/nh- base for Burmese "နှ-".
+        // Productive user rules: nhy+ -> ညှ-, hn+/nh+ -> နှ-.
+        // Keep nhy as a longer base so nhyap can become ညှ + ပ်.
+        {"nhy", "ညှ"},
         {"hn", "နှ"},
         {"nh", "နှ"},
         {"ng", "င"},
@@ -952,6 +954,37 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
     if (trimmedInput == "Ta") {
         return {Candidate{"တစ်", 1000000}};
     }
+
+    // User-requested case-sensitive shortcuts. These must stay above the
+    // lowercase-normalized dictionary path so Mhyr/P/B/Sway/Swae remain
+    // distinct from mhyr/p/b/sway/swae.
+    if (trimmedInput == "Mhyr") {
+        return {Candidate{"မျှား", 2000000}};
+    }
+    if (trimmedInput == "P") {
+        return {
+            Candidate{"ပြီး", 2000000},
+            Candidate{"ဘီ", 1999000},
+            Candidate{"ပြီ", 1998000}
+        };
+    }
+    if (trimmedInput == "B") {
+        return {
+            Candidate{"ပြီ", 2000000},
+            Candidate{"ပီ", 1999000},
+            Candidate{"ဘီ", 1998000}
+        };
+    }
+    if (trimmedInput == "Sway") {
+        return {Candidate{"ဆွေ", 2000000}};
+    }
+    if (trimmedInput == "Swae") {
+        return {
+            Candidate{"ဆွေ", 2000000},
+            Candidate{"ဆွေး", 1999000}
+        };
+    }
+
     if (trimmedInput == "S") {
         return {
             Candidate{"ဆောက်", 1400000},
