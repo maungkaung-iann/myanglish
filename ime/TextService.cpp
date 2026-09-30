@@ -183,8 +183,7 @@ bool isMyanmarPunctuationCharacter(wchar_t character) {
         || character == L'.'
         || character == L':'
         || character == L';'
-        || character == L'"'
-        || character == L'\\';
+        || character == L'"';
 }
 
 bool isMyanmarPunctuationKey(WPARAM keyCode) {
@@ -251,7 +250,7 @@ bool isR111ArrowKey(WPARAM keyCode) {
 
 bool isR111CustomSymbol(wchar_t c) {
     return c == L',' || c == L'.' || c == L':' || c == L';'
-        || c == L'"' || c == L'\\' || c == L'|' || c == L'*';
+        || c == L'"' || c == L'|' || c == L'*';
 }
 
 bool isR111PassThroughSymbol(WPARAM keyCode) {
@@ -1526,7 +1525,7 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
         return recover(hr, "commit composition + semicolon Myanmar mark");
     }
 
-    // R1.1 Shift+backslash (|) -> င်. Normal backslash keeps R1's င်္.
+    // R1.1 Shift+backslash (|) -> င်. Normal backslash is left to the host unchanged.
     {
         wchar_t typed = 0;
         if (translatedCharacterForKey(keyCode, typed) && typed == L'|') {
@@ -1546,38 +1545,6 @@ HRESULT TextService::processKeyDown(ITfContext* context, WPARAM keyCode) {
             return recover(
                 compositionManager_.insertLiteral(context, ngAsat[1]),
                 "R1.1 Shift+backslash asat"
-            );
-        }
-    }
-
-    // Alpha 0.10.5.1: actual typed backslash inserts kinzi "င်္".
-    {
-        wchar_t typed = 0;
-        if (translatedCharacterForKey(keyCode, typed) && typed == L'\\') {
-            candidateWindow_.hide();
-            candidateSelectionActive_ = false;
-            conversionActive_ = false;
-            selectedCandidateIndex_ = 0;
-            stackMode_ = false;
-            compositionManager_.setStackPrefixEnabled(false);
-
-            HRESULT hr = S_OK;
-            if (compositionManager_.hasBufferedText()
-                || compositionManager_.hasActiveComposition()) {
-                if (conversionActive_ || candidateSelectionActive_) {
-                    hr = compositionManager_.commitVisiblePreview(context);
-                } else {
-                    hr = compositionManager_.commitBestCandidate(context);
-                }
-
-                if (FAILED(hr) && hr != S_FALSE) {
-                    return recover(hr, "commit before backslash kinzi");
-                }
-            }
-
-            return recover(
-                compositionManager_.beginKinziPending(context),
-                "backslash begin kinzi pending"
             );
         }
     }

@@ -640,15 +640,6 @@ HRESULT CompositionManager::commitKinziShortcut(
     );
 }
 
-HRESULT CompositionManager::beginKinziPending(
-    ITfContext* context
-) {
-    return requestEdit(
-        context,
-        EditAction::BeginKinziPending
-    );
-}
-
 HRESULT CompositionManager::commitStackShortcut(
     ITfContext* context,
     std::size_t candidateIndex
@@ -1356,71 +1347,6 @@ HRESULT CompositionManager::executeEdit(
             rawPreview_ = false;
             debugLog("Selected candidate auto-committed before next word");
         }
-        return result;
-    }
-
-    case EditAction::BeginKinziPending: {
-        // Alpha 0.10.7:
-        // "\" means "insert kinzi here and attach the NEXT syllable after it".
-        //
-        // Example:
-        //   အလ + \      -> အလင်္
-        //   then kar    -> အလင်္kar (raw)
-        //   Space       -> အလင်္ကာ
-        //
-        // We insert kinzi at the current caret, then keep it as a prefix inside
-        // the next composition instead of moving it into the previous syllable.
-        TF_SELECTION selection{};
-        ULONG fetched = 0;
-        HRESULT result = context->GetSelection(
-            editCookie,
-            TF_DEFAULT_SELECTION,
-            1,
-            &selection,
-            &fetched
-        );
-
-        if (FAILED(result) || fetched != 1 || selection.range == nullptr) {
-            return FAILED(result) ? result : E_FAIL;
-        }
-
-        const wchar_t kinzi[] = {
-            static_cast<wchar_t>(0x1004), // င
-            static_cast<wchar_t>(0x103A), // ်
-            static_cast<wchar_t>(0x1039)  // ္
-        };
-
-        result = selection.range->SetText(
-            editCookie,
-            0,
-            kinzi,
-            static_cast<LONG>(std::size(kinzi))
-        );
-
-        if (SUCCEEDED(result)) {
-            result = selection.range->Collapse(editCookie, TF_ANCHOR_END);
-        }
-
-        if (SUCCEEDED(result)) {
-            TF_SELECTION after{};
-            after.range = selection.range;
-            after.style.ase = TF_AE_NONE;
-            after.style.fInterimChar = FALSE;
-            result = context->SetSelection(editCookie, 1, &after);
-        }
-
-        selection.range->Release();
-
-        if (SUCCEEDED(result)) {
-            kinziPending_ = true;
-            stackJoinPrefix_ = L"င်္";
-            buffer_.clear();
-            rawPreview_ = false;
-            stackPrefixEnabled_ = false;
-            hasLastTextRect_ = false;
-            debugLog("Kinzi pending mode armed by backslash");
-        }
-
         return result;
     }
 

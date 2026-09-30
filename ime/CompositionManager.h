@@ -57,7 +57,6 @@ public:
     // written and committed. Example: လိမ + mar + Ctrl+Enter -> လိမ္မာ.
     HRESULT commitStackShortcut(ITfContext* context, std::size_t candidateIndex);
     HRESULT commitKinziShortcut(ITfContext* context, std::size_t candidateIndex);
-    HRESULT beginKinziPending(ITfContext* context);
 
     // Alpha 0.9.9: begin a stacked syllable WITHOUT ending the current
     // composition. The previous Burmese candidate and the new virama-led
@@ -101,7 +100,6 @@ public:
         CommitCandidate,
         CommitStackShortcut,
         CommitKinziShortcut,
-        BeginKinziPending,
         BeginStackJoin,
         CommitVisiblePreview,
         CommitVisiblePreviewAndStartNext,
