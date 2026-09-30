@@ -1,5 +1,5 @@
 MYANGLISH IME - STABLE FRIEND PACKAGE
-Checkpoint: 9eaed78
+Checkpoint: 2ca961e
 ==========================================
 
 INSTALL
@@ -14,7 +14,7 @@ UNINSTALL
 2. Approve the Windows Administrator prompt.
 
 IMPORTANT
-- This package is built from stable checkpoint 9eaed78.
+- This package is built from stable checkpoint 2ca961e.
 - Windows may show a reputation/signing warning because this test build is not code-signed.
 - Do not disable Windows Security.
 - Only use this package if it came directly from the Myanglish developer.

@@ -12,8 +12,8 @@ permissions:
   contents: write
 
 env:
-  STABLE_SHA: 9eaed7815cca7640807ac0d8786e15e2abb291d9
-  RELEASE_TAG: stable-9eaed78
+  STABLE_SHA: 2ca961e3feac4ee41cf8948a76fc5e5ee6d5f322
+  RELEASE_TAG: stable-2ca961e
 
 jobs:
   build-and-publish:
@@ -73,7 +73,7 @@ jobs:
           Copy-Item "wrapper/packaging/friend/uninstall.ps1" $package -Force
           Copy-Item "wrapper/packaging/friend/README_FIRST.txt" $package -Force
 
-          Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $dist "Myanglish-Friend-Package-9eaed78.zip") -Force
+          Compress-Archive -Path "$package/*" -DestinationPath (Join-Path $dist "Myanglish-Friend-Package-2ca961e.zip") -Force
 
       - name: Publish stable friend release
         shell: pwsh
@@ -84,7 +84,7 @@ jobs:
 
           gh release view $env:RELEASE_TAG --repo "maungkaung-iann/myanglish" *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-9eaed78.zip" --target $env:STABLE_SHA --title "Myanglish Stable 9eaed78" --notes "Stable friend-share build from checkpoint 9eaed78. For friend testing, use Myanglish-Friend-Package-9eaed78.zip and run install.cmd." --repo "maungkaung-iann/myanglish"
+            gh release create $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-2ca961e.zip" --target $env:STABLE_SHA --title "Myanglish Stable 2ca961e" --notes "Stable friend-share build from checkpoint 2ca961e. For friend testing, use Myanglish-Friend-Package-2ca961e.zip and run install.cmd." --repo "maungkaung-iann/myanglish"
           } else {
-            gh release upload $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-9eaed78.zip" --clobber --repo "maungkaung-iann/myanglish"
+            gh release upload $env:RELEASE_TAG "dist/MyanglishInstaller.exe" "dist/Myanglish-Friend-Package-2ca961e.zip" --clobber --repo "maungkaung-iann/myanglish"
           }
