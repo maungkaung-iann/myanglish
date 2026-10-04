@@ -441,6 +441,12 @@ int main() {
 
         // 2026-09-30 user-requested word candidates.
         const std::vector<std::pair<std::string, std::vector<std::string>>> requestedWordCandidates = {
+            {"tay", {u8"သေး", u8"သေ"}},
+            {"hmar", {u8"မှား"}},
+            {"aphay", {u8"အဖြေ"}},
+            {"bawa", {u8"ဘဝ"}},
+            {"ta", {u8"တ"}},
+
             {"nyoe", {u8"ငြှိုး", u8"ညှိုး"}},
             {"nhyoe", {u8"ညှိုး", u8"ငြှိုး"}},
             {"nhyo", {u8"ငြှိုး"}},
