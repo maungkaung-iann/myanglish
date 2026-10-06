@@ -246,6 +246,8 @@ HRESULT copyPayloadToInstallDirectory() {
     const EmbeddedFile files[] = {
         { IDR_MYANGLISH_IME, L"MyanglishIME.dll" },
         { IDR_MYANGLISH_SETTINGS, L"MyanglishSettings.exe" },
+        { IDR_MYANGLISH_UPDATER, L"updater\\MyanglishUpdater.ps1" },
+        { IDR_MYANGLISH_UPDATER_INSTALL, L"updater\\Install-AutoUpdate.ps1" },
 
         { IDR_DATA_1000, L"data\\alpha08_candidates.csv" },
         { IDR_DATA_1001, L"data\\dictionary.csv" },
@@ -336,6 +338,43 @@ HRESULT callRegistrationExportForDll(const std::filesystem::path& dllPath, bool 
     return hr;
 }
 
+HRESULT installAutoUpdater() {
+    const auto scriptPath = installDirectory() / L"updater" / L"Install-AutoUpdate.ps1";
+    std::error_code ec;
+    if (!std::filesystem::exists(scriptPath, ec) || ec) {
+        return HRESULT_FROM_WIN32(ec ? ec.value() : ERROR_FILE_NOT_FOUND);
+    }
+
+    wchar_t systemDirectory[MAX_PATH]{};
+    if (GetSystemDirectoryW(systemDirectory, MAX_PATH) == 0) {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    const auto powershell = std::filesystem::path(systemDirectory)
+        / L"WindowsPowerShell" / L"v1.0" / L"powershell.exe";
+    std::wstring parameters =
+        L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" +
+        scriptPath.wstring() + L"\"";
+
+    SHELLEXECUTEINFOW execute{};
+    execute.cbSize = sizeof(execute);
+    execute.fMask = SEE_MASK_NOCLOSEPROCESS;
+    execute.lpVerb = L"open";
+    execute.lpFile = powershell.c_str();
+    execute.lpParameters = parameters.c_str();
+    execute.nShow = SW_HIDE;
+
+    if (!ShellExecuteExW(&execute) || execute.hProcess == nullptr) {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    WaitForSingleObject(execute.hProcess, 60000);
+    DWORD exitCode = 1;
+    GetExitCodeProcess(execute.hProcess, &exitCode);
+    CloseHandle(execute.hProcess);
+    return exitCode == 0 ? S_OK : E_FAIL;
+}
+
 HRESULT installMyanglish() {
     HRESULT hr = copyPayloadToInstallDirectory();
     logSetupAction("Install.CopyPayload", hr);
@@ -344,7 +383,16 @@ HRESULT installMyanglish() {
     }
 
     const auto dllPath = installDirectory() / L"MyanglishIME.dll";
-    return callRegistrationExportForDll(dllPath, false);
+    hr = callRegistrationExportForDll(dllPath, false);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // The first elevated install registers the background updater once.
+    // Future official releases can then install silently without another UAC prompt.
+    hr = installAutoUpdater();
+    logSetupAction("Install.AutoUpdater", hr);
+    return hr;
 }
 
 std::wstring quoteArg(const std::wstring& value) {
