@@ -1,0 +1,34 @@
+<!doctype html><html lang="my"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Myanglish</title><link rel="stylesheet" href="app.css"></head><body>
+<div class="orb o1"></div><div class="orb o2"></div>
+<div class="shell">
+<aside class="glass sidebar">
+  <div class="brand"><img src="assets/myanglish-logo.png"><b>Myanglish</b></div>
+  <nav id="nav">
+    <button class="nav active" data-page="home">⌂ <span>Home</span></button>
+    <button class="nav" data-page="features">◇ <span>Features</span></button>
+    <button class="nav" data-page="words">＋ <span>Add Words</span></button>
+    <button class="nav" data-page="manual">▤ <span>User Manual</span></button>
+    <button class="nav" data-page="updates">↓ <span>Updates</span></button>
+    <button class="nav" data-page="about">ⓘ <span>About</span></button>
+    <button class="nav" data-page="contact">✉ <span>Contact</span></button>
+  </nav>
+  <div class="side-status"><span class="dot"></span><div><b>Myanglish IME</b><small>အလုပ်လုပ်နေပါသည်</small></div></div>
+  <small class="version">Version 0.6.0</small>
+</aside>
+<main>
+<section class="page active" id="home">
+ <div class="hero enter"><div class="eyebrow">MYANGLISH IME</div><h1>Myanglish</h1><h2>Myanglish လိုရိုက် မြန်မာလိုထွက်</h2><p>မြန်မာလက်ကွက်ကျက်စရာမလိုပဲ<br>အင်္ဂလိပ်လက်ကွက်နဲ့ မြန်မာစာကို လွယ်ကူစွာ ရိုက်လိုက်ပါ</p><div class="pill"><span class="dot"></span> Myanglish IME • Active</div></div>
+ <div class="grid enter delay1">
+  <button class="card jump" data-go="features"><b>Features</b><span>Myanglish ရဲ့ လုပ်ဆောင်ချက်များ</span><i>→</i></button>
+  <button class="card jump" data-go="words"><b>Add Words</b><span>ကိုယ်ပိုင်စကားလုံးများ ထည့်ပါ</span><i>→</i></button>
+  <button class="card jump" data-go="manual"><b>User Manual</b><span>အသုံးပြုနည်းကို လေ့လာပါ</span><i>→</i></button>
+  <button class="card jump" data-go="updates"><b>Updates</b><span>Version အသစ်များ စစ်ဆေးပါ</span><i>→</i></button>
+ </div>
+</section>
+<section class="page" id="features"><header><small>MYANGLISH</small><h1>Features</h1><p>Myanglish ရဲ့ လုပ်ဆောင်ချက်နဲ့ shortcut တွေကို တစ်နေရာတည်းမှာ ရှာဖွေကြည့်နိုင်ပါတယ်။</p></header><div class="feature-tools"><div class="feature-search"><span>⌕</span><input id="featureSearch" placeholder="Search features..."></div><select id="featureFilter"><option value="all">All</option><option value="typing">Typing</option><option value="keyboard">Keyboard</option><option value="dictionary">Dictionary</option></select></div><div class="feature-table"><div class="feature-head"><span>Category</span><span>Action</span><span>Shortcut</span></div><div id="featureList"></div></div></section>
+<section class="page" id="words"><header><small>PERSONAL DICTIONARY</small><h1>Add Words</h1><p>ကိုယ်သုံးနေကျ Myanglish စကားလုံးကို မြန်မာစာနဲ့ ချိတ်ထားနိုင်ပါတယ်။</p></header><div class="glass panel"><label>Myanglish</label><input id="raw" placeholder="pyinnyar"><label>Myanmar</label><input id="burmese" placeholder="ပညာ"><label>Candidate priority</label><div class="seg"><button class="prio active" data-p="1">1st</button><button class="prio" data-p="2">2nd</button><button class="prio" data-p="3">3rd</button></div><button id="add" class="primary">Add Word</button><div id="toast"></div></div><div class="words" id="wordsList"></div></section>
+<section class="page" id="manual"><header><small>GUIDE</small><h1>User Manual</h1><p>Myanglish IME ကို စတင်အသုံးပြုရန် လွယ်ကူတဲ့လမ်းညွှန်။</p></header><div class="stack"><div class="glass panel"><b>01 · Myanglish ကိုရွေးပါ</b><p>Windows မှာ Win + Space နှိပ်ပြီး Myanglish IME ကိုရွေးပါ။</p></div><div class="glass panel"><b>02 · Myanglish လိုရိုက်ပါ</b><p>အင်္ဂလိပ်လက်ကွက်နဲ့ အသံထွက်အတိုင်း ရိုက်ပါ။ Space နဲ့ candidate ရွေးနိုင်ပါတယ်။</p></div><div class="glass panel"><b>03 · Enter နဲ့အတည်ပြုပါ</b><p>လိုချင်တဲ့စာလုံးရလာရင် Enter နဲ့ commit လုပ်ပါ။</p></div></div></section>
+<section class="page" id="updates"><header><small>MYANGLISH</small><h1>Updates</h1><p>Myanglish ရဲ့ လက်ရှိ Version နဲ့ update အခြေအနေ။</p></header><div class="glass panel row"><div><small>INSTALLED VERSION</small><h2>0.6.0</h2></div><button class="primary">Check for Updates</button></div></section>
+<section class="page" id="about"><header><small>ABOUT</small><h1>Myanglish</h1></header><div class="about-copy"><p>မြန်မာစာကို အင်္ဂလိပ်လက်ကွက်နဲ့ လွယ်ကူစွာ ရိုက်နိုင်စေဖို့ ရည်ရွယ်ပြီး ဖန်တီးထားပါတယ်။</p><p>Microsoft Store မှာ တင်ဖို့ ကြိုးစားခဲ့ပေမယ့် certificate signing လိုအပ်နေသေးတဲ့အတွက် publish လုပ်ဖို့ မအောင်မြင်ခဲ့ပါဘူး။ ဒါကြောင့် လက်ရှိ Setup လုပ်တဲ့အချိန်မှာ အခက်အခဲအနည်းငယ် ရှိနိုင်ပါတယ်။</p><p>နောက်ပိုင်းမှာ Microsoft Store ပေါ် တင်နိုင်အောင် ဆက်လက်ပြင်ဆင်ပြီး Windows ရဲ့ built-in language/input ရွေးချယ်မှုထဲမှာပါ Myanglish ကို အလွယ်တကူ အသုံးပြုနိုင်တဲ့အဆင့်အထိ develop လုပ်သွားဖို့ ရည်ရွယ်ထားပါတယ်။</p><p>Myanglish ပိုကောင်းလာဖို့ အကြံပေးချက်များ၊ လုပ်ဆောင်ချက်အသစ် အကြံပြုချက်များနဲ့ စကားလုံးအကြံပြုချက်များကို ပေးပို့နိုင်ပါတယ်။</p></div><div class="glass panel creator"><b>Created by MAUNG KAUNG</b><p>Developer of Myanglish</p><small>2026</small></div></section>
+<section class="page" id="contact"><header><small>SUPPORT</small><h1>Contact</h1><p>ပြဿနာ၊ အကြံပြုချက်နဲ့ စကားလုံးအသစ်များကို ပေးပို့နိုင်ပါတယ်။</p></header><div class="grid"><button class="card"><b>Bug Report</b><span>ပြဿနာတင်ပြရန်</span></button><button class="card"><b>Feature Request</b><span>လုပ်ဆောင်ချက်အသစ် အကြံပြုရန်</span></button><button class="card"><b>Word Suggestion</b><span>စကားလုံးအသစ် အကြံပြုရန်</span></button><button class="card"><b>Email</b><span>ဆက်သွယ်ရန်</span></button></div></section>
+</main></div><script src="app.js"></script></body></html>
