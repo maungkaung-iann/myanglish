@@ -1,4 +1,4 @@
-﻿#include "TextService.h"
+#include "TextService.h"
 
 #include "Guids.h"
 #include "KeyEventSink.h"
@@ -877,10 +877,14 @@ bool TextService::shouldHandleKeyDown(ITfContext*, WPARAM keyCode) noexcept {
         }
     }
 
+    // Full native keyboard bypass while plain CapsLock English mode is active.
+    // Windows/the active keyboard layout owns every normal key.
+    if (plainCapsCapitalMode_) {
+        return false;
+    }
+
     if (isAsciiLetter(keyCode)) {
-        // While plain CapsLock mode is active, Roman letters belong to Windows,
-        // not to Myanglish conversion. The host produces normal capital text.
-        return !plainCapsCapitalMode_;
+        return true;
     }
     if (isR111MyanmarDigitKey(keyCode)) {
         return true;
