@@ -203,6 +203,8 @@ if(WIN32)
 
 IDR_MYANGLISH_IME RCDATA \"${CMAKE_CURRENT_BINARY_DIR}/installer_payload/$<CONFIG>/MyanglishIME.dll\"
 IDR_MYANGLISH_SETTINGS RCDATA \"${CMAKE_CURRENT_BINARY_DIR}/installer_payload/$<CONFIG>/MyanglishSettings.exe\"
+IDR_MYANGLISH_UPDATER RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/installer/updater/MyanglishUpdater.ps1\"
+IDR_MYANGLISH_UPDATER_INSTALL RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/installer/updater/Install-AutoUpdate.ps1\"
 
 IDR_DATA_1000 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/alpha08_candidates.csv\"
 IDR_DATA_1001 RCDATA \"${CMAKE_CURRENT_SOURCE_DIR}/data/dictionary.csv\"
