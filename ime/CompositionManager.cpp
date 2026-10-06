@@ -1,4 +1,4 @@
-﻿#include "CompositionManager.h"
+#include "CompositionManager.h"
 #include "Guids.h"
 #include "../engine/UnicodeUtils.h"
 
@@ -1941,15 +1941,45 @@ HRESULT CompositionManager::executeEdit(
 
         std::wstring replacement;
 
-        replacement.push_back(
-            previousConsonant
-        );
+        // Myanglish SYSTEM STACK normalization exceptions.
+        //
+        // ဉ် + ည... -> ည...
+        //   ပဉ် + ညာ -> ပညာ
+        //   သဉ် + ညာ -> သညာ
+        //
+        // ဌ် + ဌ... -> ဋ္ဌ...
+        //   ပဌ် + ဌန်း -> ပဋ္ဌန်း
+        const bool isNyaNormalization =
+            previousConsonant == static_cast<wchar_t>(0x1009) // ဉ
+            && candidateFirst == static_cast<wchar_t>(0x100A); // ည
 
-        replacement.push_back(
-            static_cast<wchar_t>(0x1039)
-        ); // ္
+        const bool isHtaStackNormalization =
+            previousConsonant == static_cast<wchar_t>(0x100C) // ဌ
+            && candidateFirst == static_cast<wchar_t>(0x100C); // ဌ
 
-        replacement += candidate;
+        if (isNyaNormalization) {
+            replacement = candidate;
+        } else if (isHtaStackNormalization) {
+            replacement.push_back(
+                static_cast<wchar_t>(0x100B)
+            ); // ဋ
+
+            replacement.push_back(
+                static_cast<wchar_t>(0x1039)
+            ); // ္
+
+            replacement += candidate;
+        } else {
+            replacement.push_back(
+                previousConsonant
+            );
+
+            replacement.push_back(
+                static_cast<wchar_t>(0x1039)
+            ); // ္
+
+            replacement += candidate;
+        }
 
         // Finish the raw Roman composition before replacing the combined range.
         result =
