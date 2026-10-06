@@ -455,7 +455,36 @@ HRESULT startDeferredCleanup(const std::filesystem::path& destination) {
     return S_OK;
 }
 
+void removeAutoUpdater() {
+    wchar_t systemDirectory[MAX_PATH]{};
+    if (GetSystemDirectoryW(systemDirectory, MAX_PATH) == 0) {
+        return;
+    }
+
+    const auto powershell = std::filesystem::path(systemDirectory)
+        / L"WindowsPowerShell" / L"v1.0" / L"powershell.exe";
+    const wchar_t* parameters =
+        L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
+        L"\"Unregister-ScheduledTask -TaskName 'Myanglish Auto Update' -Confirm:$false -ErrorAction SilentlyContinue; "
+        L"Remove-Item (Join-Path $env:ProgramData 'Myanglish') -Recurse -Force -ErrorAction SilentlyContinue\"";
+
+    SHELLEXECUTEINFOW execute{};
+    execute.cbSize = sizeof(execute);
+    execute.fMask = SEE_MASK_NOCLOSEPROCESS;
+    execute.lpVerb = L"open";
+    execute.lpFile = powershell.c_str();
+    execute.lpParameters = parameters;
+    execute.nShow = SW_HIDE;
+
+    if (ShellExecuteExW(&execute) && execute.hProcess != nullptr) {
+        WaitForSingleObject(execute.hProcess, 30000);
+        CloseHandle(execute.hProcess);
+    }
+}
+
 HRESULT uninstallMyanglish() {
+    removeAutoUpdater();
+
     const auto permanentDll = installDirectory() / L"MyanglishIME.dll";
     const auto fallbackDll = moduleDirectory() / L"MyanglishIME.dll";
 
