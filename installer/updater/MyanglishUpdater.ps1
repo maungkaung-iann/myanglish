@@ -19,7 +19,22 @@ function Save-State($s) {
 }
 try {
   $headers=@{'User-Agent'='Myanglish-Updater';'Accept'='application/vnd.github+json'}
-  $release=Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+  $release=$null
+  for($attempt=1;$attempt -le 3;$attempt++){
+    try{
+      $release=Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+      break
+    }catch{
+      $response=$_.Exception.Response
+      $status=if($response){[int]$response.StatusCode}else{0}
+      if($status -eq 403 -or $status -eq 429){
+        Log "GitHub rate limit response ($status), attempt $attempt/3."
+        if($attempt -lt 3){Start-Sleep -Seconds (15*$attempt);continue}
+      }
+      throw
+    }
+  }
+  if(!$release){throw 'Unable to read latest GitHub Release metadata.'}
   if($release.draft -or $release.prerelease){ throw 'Latest release is not a stable public release.' }
   $tag=[string]$release.tag_name
   if(!$tag){ throw 'Release tag is missing.' }
