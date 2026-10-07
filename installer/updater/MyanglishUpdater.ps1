@@ -4,6 +4,7 @@ $Repo = 'maungkaung-iann/myanglish'
 $Root = Join-Path $env:ProgramData 'Myanglish'
 $StatePath = Join-Path $Root 'updater-state.json'
 $LogPath = Join-Path $Root 'updater.log'
+$ChannelPath = Join-Path $Root 'update-channel.txt'
 $UpdateDir = Join-Path $Root 'updates'
 New-Item -ItemType Directory -Force -Path $Root,$UpdateDir | Out-Null
 
@@ -18,11 +19,22 @@ function Save-State($s) {
   $s | ConvertTo-Json | Set-Content -Path $StatePath -Encoding UTF8
 }
 try {
+  $channel='stable'
+  if(Test-Path $ChannelPath){
+    $requested=(Get-Content $ChannelPath -Raw).Trim().ToLowerInvariant()
+    if($requested -eq 'test'){$channel='test'}
+  }
   $headers=@{'User-Agent'='Myanglish-Updater';'Accept'='application/vnd.github+json'}
   $release=$null
   for($attempt=1;$attempt -le 3;$attempt++){
     try{
-      $release=Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+      if($channel -eq 'test'){
+        $all=@(Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=20" -Headers $headers)
+        $release=$all | Where-Object { !$_.draft -and $_.prerelease -and ([string]$_.tag_name).StartsWith('test-') } | Select-Object -First 1
+        if(!$release){throw 'No public test prerelease with a test-* tag was found.'}
+      }else{
+        $release=Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers $headers
+      }
       break
     }catch{
       $response=$_.Exception.Response
@@ -35,12 +47,14 @@ try {
     }
   }
   if(!$release){throw 'Unable to read latest GitHub Release metadata.'}
-  if($release.draft -or $release.prerelease){ throw 'Latest release is not a stable public release.' }
+  if($release.draft){ throw 'Draft releases are never installed.' }
+  if($channel -eq 'stable' -and $release.prerelease){ throw 'Stable channel refused a prerelease.' }
+  if($channel -eq 'test' -and !$release.prerelease){ throw 'Test channel requires a prerelease.' }
   $tag=[string]$release.tag_name
   if(!$tag){ throw 'Release tag is missing.' }
   $state=Read-State
   $state.lastCheck=(Get-Date).ToUniversalTime().ToString('o')
-  if(!$Force -and $state.installedTag -eq $tag){$state.lastResult='up-to-date';Save-State $state;Log "Up to date: $tag";exit 0}
+  if(!$Force -and $state.installedTag -eq $tag){$state.lastResult='up-to-date';Save-State $state;Log "Up to date [$channel]: $tag";exit 0}
 
   $asset=$release.assets | Where-Object {$_.name -eq 'MyanglishInstaller.exe'} | Select-Object -First 1
   if(!$asset){ throw "Release $tag has no MyanglishInstaller.exe asset." }
@@ -62,14 +76,14 @@ try {
   $actual=(Get-FileHash -Algorithm SHA256 -Path $installer).Hash.ToLowerInvariant()
   if($actual -ne $expected){Remove-Item $installer -Force -ErrorAction SilentlyContinue;throw 'SHA-256 verification failed. Update refused.'}
 
-  Log "Verified $tag SHA256=$actual"
+  Log "Verified [$channel] $tag SHA256=$actual"
   $p=Start-Process -FilePath $installer -ArgumentList '/silent' -Wait -PassThru
   if($p.ExitCode -ne 0){throw "Installer failed with exit code $($p.ExitCode)."}
 
   $state.installedTag=$tag
   $state.lastResult='installed'
   Save-State $state
-  Log "Installed $tag successfully."
+  Log "Installed [$channel] $tag successfully."
   Start-Process "$env:windir\System32\ctfmon.exe" -ErrorAction SilentlyContinue
   exit 0
 }catch{
