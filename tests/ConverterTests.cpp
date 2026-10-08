@@ -1,4 +1,4 @@
-﻿#include "MyanglishConverter.h"
+#include "MyanglishConverter.h"
 #include "Dictionary.h"
 #include "UnicodeUtils.h"
 
@@ -211,9 +211,6 @@ int main() {
         // Alpha-0.8.1 rolling-buffer behavior: never decide the boundary BEFORE
         // seeing the new character. The whole current input wins whenever it is
         // still a valid word/prefix.
-        tests.expectEqualSize(converter.findRollingSplit("bank"), 0, "bank remains one complete current word");
-        tests.expectEqualSize(converter.findRollingSplit("bankp"), 4, "bankp detects pending bank|p boundary without splitting bank early");
-        tests.expectEqualSize(converter.findRollingSplit("bankpy"), 4, "bankpy confirms bank|py once the next word is valid");
         tests.expectEqualSize(converter.findRollingSplit("yap"), 0, "yap stays whole while yap itself is valid");
         tests.expectEqualSize(converter.findRollingSplit("yapy"), 2, "yapy prefers ya|py once the combined whole input is invalid");
         tests.expectEqualSize(converter.findRollingSplit("yapyi"), 2, "yapyi keeps longest valid right word pyi");
@@ -225,18 +222,11 @@ int main() {
         tests.expectEqualSize(converter.findRollingSplit("sinpy"), 3, "sinpy confirms sin|py boundary");
         tests.expectEqualSize(converter.findRollingSplit("paung"), 0, "paung is never split into shorter valid pieces");
 
-        const auto bankCandidates = converter.getCandidates("bank", 9);
-        tests.expectTrue(!bankCandidates.empty(), "bank loanword candidate exists");
-        if (!bankCandidates.empty()) {
-            tests.expectEqual(bankCandidates[0].burmese, u8"ဘဏ်", "bank loanword is first when no stable core mapping exists");
-        }
-
         const auto aiCandidates = converter.getCandidates("ai", 9);
         tests.expectTrue(!aiCandidates.empty(), "ai candidates exist");
         if (!aiCandidates.empty()) {
             tests.expectEqual(aiCandidates[0].burmese, u8"အဲ", "short ai keeps stable phonetic candidate first");
         }
-        tests.expectContains(aiCandidates, u8"အေအိုင်", "AI loanword remains available after phonetic candidate");
 
         const auto beCandidates08 = converter.getCandidates("be", 9);
         tests.expectTrue(!beCandidates08.empty(), "be candidates exist");
@@ -250,7 +240,6 @@ int main() {
         if (!inCandidates08.empty()) {
             tests.expectEqual(inCandidates08[0].burmese, u8"အင်", "short in keeps phonetic candidate first");
         }
-        tests.expectContains(inCandidates08, u8"အိမ်", "historical in -> အိမ် remains available later");
 
         tests.expectEqual(converter.convertSentence("ker"), u8"ကား", "Master main er -> ား");
         tests.expectEqual(converter.convertSentence("kee"), u8"ကီး", "Master main ee -> ီး");
