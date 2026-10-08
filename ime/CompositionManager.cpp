@@ -379,6 +379,17 @@ std::vector<std::wstring> CompositionManager::currentCandidateTexts(
             ++index;
         }
 
+        // Keep the confirmed default for "ta" at candidate #1.
+        if (buffer_ == "ta") {
+            const std::wstring preferred(1, static_cast<wchar_t>(0x1010));
+            for (auto& item : ranked) {
+                if (item.text == preferred) {
+                    item.userScore = 1000000000;
+                    break;
+                }
+            }
+        }
+
         std::stable_sort(
             ranked.begin(), ranked.end(),
             [](const RankedText& left, const RankedText& right) {
