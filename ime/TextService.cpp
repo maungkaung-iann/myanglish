@@ -64,7 +64,13 @@ public:
         a->lsStyle = TF_LS_NONE;
         a->fBoldLine = FALSE;
 
-        a->bAttr=TF_ATTR_INPUT;
+        // Chrome/Chromium experiment: distinguish an active candidate preview
+        // from ordinary input in the TSF display-attribute category.
+        // Chromium may still render its own composition styling and ignore
+        // crText; this is intentionally isolated from the passing baseline.
+        a->bAttr = candidateAvailable_
+            ? TF_ATTR_TARGET_CONVERTED
+            : TF_ATTR_INPUT;
         return S_OK;
     }
     HRESULT STDMETHODCALLTYPE SetAttributeInfo(const TF_DISPLAYATTRIBUTE*) override { return E_NOTIMPL; }
