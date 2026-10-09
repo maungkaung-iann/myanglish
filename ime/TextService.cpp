@@ -53,15 +53,18 @@ public:
         ZeroMemory(a,sizeof(*a));
 
         // Keep the host editor's background and committed text appearance.
-        // A candidate-bearing *active composition* uses a quiet gray foreground.
-        // The property is cleared when the composition is committed.
+        // Active candidate compositions use darker gray text and a subtle dotted underline.
+        // Both visual hints disappear when the composition is committed.
         a->crText.type = candidateAvailable_ ? TF_CT_COLORREF : TF_CT_NONE;
         if (candidateAvailable_) {
-            a->crText.cr = RGB(145, 151, 160);
+            a->crText.cr = RGB(107, 114, 128);
         }
         a->crBk.type = TF_CT_NONE;
-        a->crLine.type = TF_CT_NONE;
-        a->lsStyle = TF_LS_NONE;
+        a->crLine.type = candidateAvailable_ ? TF_CT_COLORREF : TF_CT_NONE;
+        if (candidateAvailable_) {
+            a->crLine.cr = RGB(107, 114, 128);
+        }
+        a->lsStyle = candidateAvailable_ ? TF_LS_DOT : TF_LS_NONE;
         a->fBoldLine = FALSE;
 
         a->bAttr=TF_ATTR_INPUT;
