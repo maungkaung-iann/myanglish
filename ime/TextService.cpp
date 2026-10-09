@@ -52,19 +52,20 @@ public:
         if(!a) return E_POINTER;
         ZeroMemory(a,sizeof(*a));
 
-        a->crText.type=TF_CT_NONE;
-        a->crBk.type=TF_CT_NONE;
-        a->crLine.type=TF_CT_SYSCOLOR;
-        a->crLine.nIndex=COLOR_WINDOWTEXT;
-
-        if(candidateAvailable_) {
-            a->lsStyle=TF_LS_SOLID;
-            a->fBoldLine=TRUE;
-        } else {
-            // Explicitly override Windows' default composition underline.
-            a->lsStyle=TF_LS_NONE;
-            a->fBoldLine=FALSE;
+        // Keep the host editor's background and committed text appearance.
+        // Active candidate compositions use darker gray text and a subtle dotted underline.
+        // Both visual hints disappear when the composition is committed.
+        a->crText.type = candidateAvailable_ ? TF_CT_COLORREF : TF_CT_NONE;
+        if (candidateAvailable_) {
+            a->crText.cr = RGB(107, 114, 128);
         }
+        a->crBk.type = TF_CT_NONE;
+        a->crLine.type = candidateAvailable_ ? TF_CT_COLORREF : TF_CT_NONE;
+        if (candidateAvailable_) {
+            a->crLine.cr = RGB(107, 114, 128);
+        }
+        a->lsStyle = candidateAvailable_ ? TF_LS_DOT : TF_LS_NONE;
+        a->fBoldLine = FALSE;
 
         a->bAttr=TF_ATTR_INPUT;
         return S_OK;

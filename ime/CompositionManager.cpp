@@ -2271,6 +2271,14 @@ HRESULT CompositionManager::executeEdit(
             utf8ToUtf16(buffer_)
         );
         if (SUCCEEDED(result)) {
+            // The first letter belongs to a new composition. Refresh its
+            // display attribute immediately in the same write edit session.
+            const bool candidateAvailable = !currentCandidateTexts(1).empty();
+            const HRESULT indicatorHr =
+                applyCandidateIndicator(editCookie, context, candidateAvailable);
+            if (FAILED(indicatorHr)) {
+                debugLogHr("candidate indicator after visible-preview boundary", indicatorHr);
+            }
             debugLog("Visible candidate accepted without rewrite + fresh next raw composition");
         }
         return result;
@@ -2370,6 +2378,14 @@ HRESULT CompositionManager::executeEdit(
             utf8ToUtf16(buffer_)
         );
         if (SUCCEEDED(result)) {
+            // The new word's first character must not inherit the committed
+            // word's display state or wait for the second keystroke.
+            const bool candidateAvailable = !currentCandidateTexts(1).empty();
+            const HRESULT indicatorHr =
+                applyCandidateIndicator(editCookie, context, candidateAvailable);
+            if (FAILED(indicatorHr)) {
+                debugLogHr("candidate indicator after atomic boundary", indicatorHr);
+            }
             debugLog("Atomic candidate commit + fresh next composition completed");
         }
         return result;
