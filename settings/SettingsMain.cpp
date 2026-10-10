@@ -14,6 +14,150 @@ constexpr int kMyanglishEditId = 1101;
 constexpr int kMyanmarEditId = 1102;
 constexpr int kAddWordButtonId = 1103;
 
+constexpr int kAboutButtonId = 1201;
+constexpr int kStoryButtonId = 1202;
+constexpr int kReaderEditId = 1203;
+constexpr wchar_t kAboutText[] = LR"MYABOUT(# Myanglish အကြောင်း
+
+မြန်မာစာရိုက်ဖို့ လက်ကွက်ကျက်စရာ မလိုတော့ဘူး။
+
+Myanglish သည် မြန်မာစာကို ပိုမိုလွယ်ကူ၊ မြန်ဆန်ပြီး သဘာဝကျကျ ရိုက်နိုင်စေရန် ဖန်တီးထားသော Windows မြန်မာစာရိုက်စနစ် (IME) တစ်ခုဖြစ်ပါသည်။
+
+ဤ Project ကို စတင်ခဲ့ရသည့် ရည်ရွယ်ချက်မှာ ရိုးရှင်းပါသည်။ မြန်မာ Keyboard လက်ကွက်ကို သီးသန့်ကျက်မှတ်ရန် မလိုဘဲ မိမိရင်းနှီးပြီးသား English အက္ခရာများဖြင့် အသံထွက်အတိုင်း ရိုက်နှိပ်ကာ မြန်မာစာအဖြစ် ပြောင်းလဲနိုင်စေရန် ဖြစ်ပါသည်။
+
+အစပိုင်းတွင် ရိုးရှင်းသော စာသားပြောင်းလဲသည့် Program တစ်ခုအဖြစ် စတင်ခဲ့သော်လည်း အကြိမ်ကြိမ် စမ်းသပ်ခြင်း၊ အမှားများကို ရှာဖွေပြင်ဆင်ခြင်းနှင့် လက်တွေ့အသုံးပြုမှုများမှတစ်ဆင့် Windows Application အမျိုးမျိုးတွင် အသုံးပြုနိုင်သော IME တစ်ခုအဖြစ် တဖြည်းဖြည်း တိုးတက်လာခဲ့ပါသည်။
+
+ဖန်တီးမှုလမ်းကြောင်းတစ်လျှောက် Windows Application များနှင့် ကိုက်ညီမှု၊ မြန်မာ Unicode စနစ်၊ စာရိုက်သည့်နေရာ မှန်ကန်မှု၊ စကားလုံးရွေးချယ်မှုနှင့် ရှုပ်ထွေးသော မြန်မာဆင့်စာလုံးများကဲ့သို့ နည်းပညာဆိုင်ရာ အခက်အခဲများစွာကို ရင်ဆိုင်ခဲ့ရပါသည်။
+
+အခက်အခဲတစ်ခုချင်းစီကို စမ်းသပ်၊ လေ့လာ၊ ပြန်လည်ပြင်ဆင်ရင်း Myanglish ကို ပိုမိုကောင်းမွန်အောင် ဆက်လက်တည်ဆောက်ခဲ့ပါသည်။
+
+Myanglish သည် ကျွန်တော့်အတွက် Software Project တစ်ခုထက် ပိုပါသည်။
+
+၎င်းသည် စိတ်ကူးတစ်ခုကို လက်တွေ့အကောင်အထည်ဖော်ခြင်း၊ ပြဿနာများကို ကိုယ်တိုင်ဖြေရှင်းခြင်း၊ အမှားများမှ သင်ယူခြင်းနှင့် အခက်အခဲများကြားမှ လက်မလျှော့ဘဲ ဆက်လက်ကြိုးစားခဲ့ခြင်းတို့၏ ရလဒ်တစ်ခုဖြစ်ပါသည်။
+
+ကျွန်တော့်၏ ရည်မှန်းချက်မှာ ရိုးရှင်းပါသည်။
+
+“လူတိုင်း မြန်မာစာကို လွယ်ကူပြီး သဘာဝကျကျ ရိုက်နိုင်စေရန်။”
+
+---
+
+Myanglish — by MAUNG KAUNG
+
+စိတ်ကူးတစ်ခုမှ စတင်ခဲ့ပြီး အခက်အခဲများကို ကျော်ဖြတ်ကာ အမြဲတမ်း ပိုမိုကောင်းမွန်အောင် ဆက်လက်ဖန်တီးနေသော မြန်မာစာရိုက်စနစ်။)MYABOUT";
+constexpr wchar_t kStoryText[] = LR"MYSTORY(# My Story
+စိတ်ကူးတစ်ခုမှ Myanglish IME ဖြစ်လာသည်အထိ
+
+မြန်မာစာရိုက်ဖို့ လက်ကွက်ကျက်စရာ မလိုတော့ဘူး။
+
+Myanglish IME ကို ဖန်တီးဖို့ စတင်စဉ်းစားခဲ့တဲ့အချိန်မှာ ကျွန်တော့်မှာ ရိုးရှင်းတဲ့ ရည်ရွယ်ချက်တစ်ခုပဲ ရှိခဲ့ပါတယ်။ မြန်မာစာကို လူတိုင်း ပိုမိုလွယ်ကူစွာ ရိုက်နိုင်စေချင်တာပါ။
+
+မြန်မာ Keyboard ကို အသုံးပြုတဲ့အခါ စာလုံးတွေရဲ့ တည်နေရာကို မှတ်သားရတာ၊ သီးသန့်လက်ကွက်လေ့လာရတာနဲ့ ဆင့်စာလုံးတွေကို ရိုက်ဖို့ Key အများကြီး မှတ်ထားရတာတွေ ရှိပါတယ်။ ဒါကြောင့် English Keyboard တစ်ခုတည်းကို အသုံးပြုပြီး မြန်မာစကားသံထွက်အတိုင်း ရိုက်လိုက်ရင် မြန်မာစာအဖြစ် ပြောင်းပေးနိုင်တဲ့ စနစ်တစ်ခု ဖန်တီးဖို့ စဉ်းစားခဲ့ပါတယ်။
+
+mingalar → မင်္ဂလာ
+
+ဒီလို ရိုးရှင်းတဲ့ စိတ်ကူးတစ်ခုကနေ Myanglish IME ကို စတင်ခဲ့ပါတယ်။
+
+အစပြုခြင်း
+
+အစပိုင်းမှာ Myanglish ဟာ English အက္ခရာတွေကို မြန်မာစာအဖြစ် ပြောင်းပေးတဲ့ ရိုးရှင်းတဲ့ Converter တစ်ခုသာ ဖြစ်ခဲ့ပါတယ်။ ဒါပေမယ့် Chrome, LINE, Notepad, Microsoft Word နဲ့ တခြား Windows Application တွေမှာ ပုံမှန် Keyboard တစ်ခုလို အသုံးပြုနိုင်တဲ့ IME တစ်ခု ဖြစ်စေချင်ခဲ့ပါတယ်။
+
+ဒီရည်မှန်းချက်ကြောင့် C++, Windows Text Services Framework (TSF), Unicode, CMake, Visual Studio နဲ့ PowerShell စတဲ့ နည်းပညာတွေကို လေ့လာပြီး လက်တွေ့အသုံးချခဲ့ပါတယ်။
+
+ကိုယ်တိုင် ဒီဇိုင်းလုပ်ခဲ့တဲ့ စာရိုက်စနစ်
+
+စာရိုက်နေချိန်မှာ English အက္ခရာတွေကို အရင်မြင်ရမယ်။ Space တစ်ချက်နှိပ်မှ မြန်မာစာအဖြစ် ပြောင်းမယ်။ နောက်ထပ် Space နှိပ်ရင် တခြားဖြစ်နိုင်တဲ့ စကားလုံးတွေကို ရွေးချယ်နိုင်မယ်။ Enter နှိပ်ရင် စကားလုံးကို အတည်ပြုမယ်။ နောက်စာလုံး စရိုက်လိုက်ရင် အရင်ရွေးထားတဲ့ စကားလုံးကို အလိုအလျောက် အတည်ပြုမယ်။
+
+မှားသွားရင် Backspace နဲ့ မူရင်း Myanglish ကို ပြန်ယူနိုင်ဖို့၊ Esc နဲ့ Conversion ကို ပယ်ဖျက်နိုင်ဖို့လည်း စဉ်းစားခဲ့ပါတယ်။ ဒီလို အသေးစိတ်အချက်တွေကို တစ်ခုချင်း သတ်မှတ်ရင်း Keyboard တစ်ခုရဲ့ User Experience ဟာ ဘယ်လောက်အရေးကြီးလဲဆိုတာ နားလည်လာခဲ့ပါတယ်။
+
+အခက်အခဲတွေ စတင်လာတဲ့အချိန်
+
+Chrome မှာ အလုပ်လုပ်ပေမယ့် LINE မှာ စာရိုက်ရင်း ရပ်သွားတာ၊ Notepad မှာ Cursor နေရာမှားတာ၊ Application ပြောင်းပြီးနောက် Candidate Window ကျန်နေခဲ့တာတွေ ဖြစ်ခဲ့ပါတယ်။ Screen ပေါ်မှာ မြန်မာစာ မှန်မှန်ပြနေပေမယ့် Enter နှိပ်ပြီး အတည်ပြုလိုက်တဲ့အခါ စာလုံးပျောက်သွားတာ၊ ထပ်သွားတာမျိုးတွေလည်း ရှိခဲ့ပါတယ်။
+
+Code တစ်နေရာကို ပြင်လိုက်ရင် တခြားနေရာမှာ ပြဿနာအသစ် ထပ်ပေါ်လာတတ်ပါတယ်။ တစ်ခါတလေ Version အသစ်က အရင် Version ထက်တောင် ပိုဆိုးသွားခဲ့ပါတယ်။ ဒါပေမယ့် Project ကို အစကနေ ပြန်မစခဲ့ပါဘူး။ Error Log တွေကို ဖတ်တယ်။ ပြဿနာဖြစ်တဲ့အကြောင်းရင်းကို ရှာတယ်။ Test Case အသစ်တွေ ဖန်တီးတယ်။ မအောင်မြင်ရင် အရင်အလုပ်လုပ်ခဲ့တဲ့ Version ကို ပြန်ယူပြီး နောက်တစ်နည်းနဲ့ စမ်းသပ်ခဲ့ပါတယ်။
+
+မြန်မာစာရဲ့ ရှုပ်ထွေးမှုကို နားလည်လာခြင်း
+
+Myanglish ကို ဖန်တီးရင်း အခက်ခဲဆုံးအပိုင်းတွေထဲက တစ်ခုက မြန်မာ Unicode နဲ့ ဆင့်စာလုံးတွေ ဖြစ်ပါတယ်။
+
+မင်္ဂလာ၊ လိမ္မာ၊ လိမ္မော်၊ အိန္ဒြာ၊ အလင်္ကာ
+
+ဒီလို စကားလုံးတွေကို မှန်ကန်စွာ ရိုက်နိုင်ဖို့ အကြိမ်ကြိမ် စမ်းသပ်ခဲ့ရပါတယ်။ မြန်မာစာမှာ Screen ပေါ်က မြင်ရတဲ့ စာလုံးပုံစံနဲ့ Computer ထဲမှာ သိမ်းဆည်းထားတဲ့ Unicode အစီအစဉ်ဟာ မတူညီနိုင်ပါဘူး။ ဒါကြောင့် စာလုံးတစ်လုံး မှန်မှန်ပေါ်လာရုံနဲ့ မလုံလောက်ဘဲ အတည်ပြုပြီးနောက် Unicode စာသားအဖြစ် မှန်ကန်နေဖို့လည်း လိုအပ်ပါတယ်။
+
+အမှားတွေကနေ သင်ယူခဲ့ခြင်း
+
+Development လုပ်နေစဉ်မှာ Build Error, Registration Error, Encoding Error နဲ့ Windows Security ဆိုင်ရာ အခက်အခဲတွေကိုလည်း ကြုံတွေ့ခဲ့ရပါတယ်။ အဲဒီပြဿနာတွေကို ဖြေရှင်းရင်း Software Development ဆိုတာ Code ရေးတတ်ရုံနဲ့ မပြီးဘူးဆိုတာ သိလာခဲ့ပါတယ်။
+
+ပြဿနာကို ခွဲခြမ်းစိတ်ဖြာတတ်ဖို့၊ မှားနေတဲ့အကြောင်းရင်းကို ရှာတတ်ဖို့၊ စမ်းသပ်မှုတွေကို စနစ်တကျ လုပ်တတ်ဖို့နဲ့ အရင် Version တွေကို လုံခြုံစွာ သိမ်းဆည်းထားတတ်ဖို့လည်း လိုအပ်ပါတယ်။
+
+Bug တစ်ခုကို ပြင်နိုင်တာထက် ဘာကြောင့် အဲဒီ Bug ဖြစ်ခဲ့လဲဆိုတာ နားလည်နိုင်ခြင်းက ပိုအရေးကြီးတယ်ဆိုတာပါ။
+
+စိတ်ကူးတစ်ခုမှ Product တစ်ခုဆီသို့
+
+အစပိုင်းမှာ Myanglish ဟာ ကျွန်တော့် Computer ပေါ်မှာပဲ စမ်းသပ်အသုံးပြုတဲ့ Project တစ်ခု ဖြစ်ခဲ့ပါတယ်။ နောက်ပိုင်းမှာတော့ တခြားသူတွေလည်း Download လုပ်ပြီး အသုံးပြုနိုင်တဲ့ Software တစ်ခု ဖြစ်လာစေဖို့ စတင်ပြင်ဆင်ခဲ့ပါတယ်။
+
+Installer, Settings, User Dictionary, Version Management နဲ့ Microsoft Store Distribution အထိ ဆက်လက်လေ့လာခဲ့ပါတယ်။ 2026 ခုနှစ် စက်တင်ဘာလမှာ Myanglish v1.0.0 အတွက် Windows Package ကို ပြင်ဆင်ပြီး Microsoft Store Certification သို့ တင်သွင်းနိုင်ခဲ့ပါတယ်။ ဒါဟာ ကျွန်တော့်အတွက် အရေးကြီးတဲ့ မှတ်တိုင်တစ်ခု ဖြစ်ခဲ့ပါတယ်။ ဒါပေမယ့် Myanglish ရဲ့ ခရီးလမ်းက အဲဒီမှာ မဆုံးသေးပါဘူး။
+
+Myanglish ရဲ့ အနာဂတ်
+
+Myanglish ကို ရိုးရိုး စာသားပြောင်းပေးတဲ့ Keyboard တစ်ခုအဖြစ်ပဲ ရပ်တန့်မထားချင်ပါဘူး။ အသုံးပြုသူရဲ့ စာရိုက်ပုံကို ပိုမိုနားလည်နိုင်တဲ့၊ စကားလုံးတွေကို ပိုမိုတိကျစွာ အကြံပြုနိုင်တဲ့၊ စာလုံးပေါင်းအမှားတွေကို ပြင်ဆင်ဖို့ အကြံပြုပေးနိုင်တဲ့ ပိုမိုအသိဉာဏ်ရှိသော မြန်မာစာရိုက်စနစ်တစ်ခု ဖြစ်လာစေချင်ပါတယ်။
+
+ကျွန်တော့်အတွက် Myanglish ရဲ့ အဓိပ္ပာယ်
+
+Myanglish ဟာ ကျွန်တော့်အတွက် Programming Project တစ်ခုတည်း မဟုတ်ပါဘူး။ ကိုယ်တိုင် စိတ်ကူးထုတ်ခဲ့တဲ့ အရာတစ်ခုကို လက်တွေ့ဖြစ်လာအောင် ကြိုးစားခဲ့တဲ့ မှတ်တမ်းတစ်ခု ဖြစ်ပါတယ်။
+
+မသိတဲ့ နည်းပညာတွေကို လေ့လာခဲ့ရတယ်။ မအောင်မြင်တဲ့ Version တွေကို ပြန်ပြင်ခဲ့ရတယ်။ စာလုံးတစ်လုံး မှန်ကန်ဖို့အတွက် နာရီပေါင်းများစွာ စမ်းသပ်ခဲ့ရတဲ့ အချိန်တွေလည်း ရှိခဲ့ပါတယ်။
+
+ဒီ Project ကနေ ကျွန်တော်ရရှိခဲ့တဲ့ အကြီးမားဆုံးအရာဟာ Software တစ်ခုတည်း မဟုတ်ပါဘူး။ စိတ်ကူးတစ်ခုကို အကောင်အထည်ဖော်နိုင်တဲ့ ယုံကြည်မှု၊ ပြဿနာတွေကို ကိုယ်တိုင်ဖြေရှင်းနိုင်တဲ့ အတွေ့အကြုံနဲ့ မအောင်မြင်တဲ့အခါ လက်မလျှော့ဘဲ ဆက်လက်ကြိုးစားနိုင်တဲ့ စိတ်ဓာတ်တို့ ဖြစ်ပါတယ်။
+
+Myanglish ကို စတင်ခဲ့တဲ့နေ့ကနေ ဒီနေ့အထိ ကျွန်တော့်ရဲ့ ရည်မှန်းချက်က မပြောင်းလဲခဲ့ပါဘူး။
+
+မြန်မာစာကို လူတိုင်း ပိုမိုလွယ်ကူပြီး သဘာဝကျကျ ရိုက်နိုင်စေချင်ပါတယ်။
+
+Myanglish ဟာ ပြီးဆုံးသွားတဲ့ Project တစ်ခုမဟုတ်ဘဲ ဆက်လက်တိုးတက်နေမယ့် ခရီးလမ်းတစ်ခု ဖြစ်ပါတယ်။
+
+Myanglish — by MAUNG KAUNG
+
+စိတ်ကူးတစ်ခုမှ စတင်ခဲ့ပြီး အမှားများမှ သင်ယူကာ အခက်အခဲများကို ကျော်ဖြတ်ရင်း တစ်ဆင့်ချင်း ဖန်တီးလာခဲ့သော မြန်မာစာရိုက်စနစ်။)MYSTORY";
+
+LRESULT CALLBACK ReaderProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_SIZE) {
+        if (HWND edit = GetDlgItem(window, kReaderEditId)) {
+            MoveWindow(edit, 12, 12, LOWORD(lParam) > 24 ? LOWORD(lParam) - 24 : 1,
+                       HIWORD(lParam) > 24 ? HIWORD(lParam) - 24 : 1, TRUE);
+        }
+        return 0;
+    }
+    return DefWindowProcW(window, message, wParam, lParam);
+}
+
+void openReader(HWND owner, bool isStory) {
+    static bool registered = false;
+    HINSTANCE instance = reinterpret_cast<HINSTANCE>(GetWindowLongPtrW(owner, GWLP_HINSTANCE));
+    if (!registered) {
+        WNDCLASSW wc{};
+        wc.lpfnWndProc = ReaderProc;
+        wc.hInstance = instance;
+        wc.lpszClassName = L"MyanglishInfoReader";
+        wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+        if (!RegisterClassW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) return;
+        registered = true;
+    }
+    HWND reader = CreateWindowExW(0, L"MyanglishInfoReader",
+        isStory ? L"Myanglish - My Story" : L"Myanglish - About",
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 750, 610,
+        owner, nullptr, instance, nullptr);
+    if (!reader) return;
+    HWND edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT",
+        isStory ? kStoryText : kAboutText,
+        WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
+        12, 12, 710, 550, reader,
+        reinterpret_cast<HMENU>(static_cast<INT_PTR>(kReaderEditId)), instance, nullptr);
+    SendMessageW(edit, WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
+    ShowWindow(reader, SW_SHOW);
+    UpdateWindow(reader);
+}
+
 std::filesystem::path settingsPath() {
     wchar_t buffer[32768]{};
     const DWORD size = GetEnvironmentVariableW(
@@ -246,10 +390,23 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
             24, 232, 540, 40,
             window, nullptr, nullptr, nullptr
         );
+        CreateWindowW(L"STATIC", L"Information", WS_CHILD | WS_VISIBLE,
+            24, 278, 160, 22, window, nullptr, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"About", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            175, 276, 170, 30, window,
+            reinterpret_cast<HMENU>(static_cast<INT_PTR>(kAboutButtonId)), nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"My Story", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            360, 276, 190, 30, window,
+            reinterpret_cast<HMENU>(static_cast<INT_PTR>(kStoryButtonId)), nullptr, nullptr);
         return 0;
     }
 
     case WM_COMMAND:
+        if (LOWORD(wParam) == kAboutButtonId || LOWORD(wParam) == kStoryButtonId) {
+            openReader(window, LOWORD(wParam) == kStoryButtonId);
+            return 0;
+        }
+
         if (LOWORD(wParam) == kSaveButtonId) {
             HWND checkbox = GetDlgItem(window, kCheckboxId);
             const bool enabled = SendMessageW(checkbox, BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -317,7 +474,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
         kClassName,
         L"Myanglish IME Settings",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-        CW_USEDEFAULT, CW_USEDEFAULT, 600, 330,
+        CW_USEDEFAULT, CW_USEDEFAULT, 600, 380,
         nullptr, nullptr, instance, nullptr
     );
 
