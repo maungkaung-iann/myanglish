@@ -659,9 +659,15 @@ HRESULT TextService::commitVisibleOnFocusLoss() noexcept {
     // On focus loss, commit exactly what this word state represents, then clear
     // every candidate/conversion flag so no other app can inherit stale state.
     HRESULT hr = S_FALSE;
-    if (conversionActive_ || candidateSelectionActive_) {
+    if (compositionManager_.hasActiveComposition()) {
+        // The preview is already written to the host TSF composition range.
+        // Re-applying commitCandidate/commitOriginal on focus loss rewrites the
+        // same Unicode text, which can duplicate combining marks in LINE/Notes.
+        // End the existing composition without writing its text a second time.
+        hr = compositionManager_.commitVisiblePreview(lastContext_);
+    } else if (conversionActive_ || candidateSelectionActive_) {
         hr = compositionManager_.isRawCandidate(selectedCandidateIndex_)
-            ? compositionManager_.commitOriginalAndInsertLiteral(lastContext_, L' ')
+            ? compositionManager_.commitOriginal(lastContext_)
             : compositionManager_.commitCandidate(lastContext_, selectedCandidateIndex_);
     } else {
         hr = compositionManager_.commitOriginal(lastContext_);
