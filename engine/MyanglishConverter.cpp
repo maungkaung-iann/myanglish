@@ -1075,6 +1075,42 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
         appendUnique(ordered, extras);
     }
 
+    // Conservative typo suggestions: only for unknown ASCII words of at least
+    // five letters, and only one insertion/deletion/substitution away from a
+    // reviewed dictionary key. Never modify exact dictionary mappings.
+    // Keep raw input as candidate #1: fuzzy suggestions require explicit choice.
+    if (!hasExactCoreMapping && normalizedInput.size() >= 5 &&
+        normalizedInput.find_first_not_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos &&
+        ordered.size() == 1 && ordered.front().burmese == originalInput) {
+        auto oneEditAway = [](const std::string& a, const std::string& b) {
+            if (a == b || a.size() + 1 < b.size() || b.size() + 1 < a.size()) return false;
+            std::size_t i = 0, j = 0;
+            int edits = 0;
+            while (i < a.size() && j < b.size()) {
+                if (a[i] == b[j]) { ++i; ++j; continue; }
+                if (++edits > 1) return false;
+                if (a.size() > b.size()) ++i;
+                else if (b.size() > a.size()) ++j;
+                else { ++i; ++j; }
+            }
+            return edits + (i < a.size() || j < b.size() ? 1 : 0) == 1;
+        };
+
+        // Only propose a result if every nearby reviewed spelling agrees on
+        // the same Myanmar output. This prevents cross-word false corrections.
+        std::string agreedOutput;
+        bool ambiguous = false;
+        for (const auto& entry : dictionary_.entries()) {
+            if (entry.myanglish.size() < 5 ||
+                !oneEditAway(normalizedInput, entry.myanglish)) continue;
+            if (agreedOutput.empty()) agreedOutput = entry.burmese;
+            else if (agreedOutput != entry.burmese) { ambiguous = true; break; }
+        }
+        if (!ambiguous && !agreedOutput.empty()) {
+            ordered.push_back(Candidate{agreedOutput, -1});
+        }
+    }
+
     if (ordered.empty()) {
         return {Candidate{originalInput, 0}};
     }
