@@ -1096,12 +1096,19 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
             return edits + (i < a.size() || j < b.size() ? 1 : 0) == 1;
         };
 
+        // Do not infer a completed syllable from a dangling final consonant.
+        // Example: taninl must NOT suggest taninlr -> တနင်္လာ;
+        // the user must type at least la or lr. This applies only to fuzzy
+        // suggestions; explicit dictionary mappings remain untouched.
+        const bool endsInBareConsonant =
+            std::string("bcdfghjklmnpqrstvxz").find(normalizedInput.back()) != std::string::npos;
+
         // Only propose a result if every nearby reviewed spelling agrees on
         // the same Myanmar output. This prevents cross-word false corrections.
         std::string agreedOutput;
         bool ambiguous = false;
         for (const auto& entry : dictionary_.entries()) {
-            if (entry.myanglish.size() < 5 ||
+            if (entry.myanglish.size() < 5 || endsInBareConsonant ||
                 !oneEditAway(normalizedInput, entry.myanglish)) continue;
             if (agreedOutput.empty()) agreedOutput = entry.burmese;
             else if (agreedOutput != entry.burmese) { ambiguous = true; break; }
