@@ -1081,7 +1081,7 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
     // Keep raw input as candidate #1: fuzzy suggestions require explicit choice.
     if (!hasExactCoreMapping && normalizedInput.size() >= 5 &&
         normalizedInput.find_first_not_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos &&
-        ordered.size() == 1 && ordered.front().burmese == originalInput) {
+        historicalIt == historicalCandidatesByInput_.end()) {
         auto oneEditAway = [](const std::string& a, const std::string& b) {
             if (a == b || a.size() + 1 < b.size() || b.size() + 1 < a.size()) return false;
             std::size_t i = 0, j = 0;
@@ -1107,7 +1107,16 @@ std::vector<Candidate> MyanglishConverter::getCandidates(const std::string& myan
             else if (agreedOutput != entry.burmese) { ambiguous = true; break; }
         }
         if (!ambiguous && !agreedOutput.empty()) {
-            ordered.push_back(Candidate{agreedOutput, -1});
+            // A fuzzy result must never silently become the default. Existing
+            // generated candidates are retained, but raw input remains first.
+            std::vector<Candidate> safe;
+            safe.push_back(Candidate{originalInput, 0});
+            safe.push_back(Candidate{agreedOutput, -1});
+            for (const auto& candidate : ordered) {
+                if (candidate.burmese != originalInput && candidate.burmese != agreedOutput)
+                    safe.push_back(candidate);
+            }
+            ordered = std::move(safe);
         }
     }
 
