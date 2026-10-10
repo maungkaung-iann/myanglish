@@ -98,6 +98,38 @@ int main() {
         const auto converter = loadConverterOrThrow();
         TestSuite tests;
 
+        // Conservative typo fallback: exact inputs are unchanged, and
+        // unrecognized 5+ letter words get only unambiguous one-edit suggestions.
+        {
+            myanglish::Dictionary typoDictionary;
+            typoDictionary.addEntry({"taninganway", u8"တနင်္ဂနွေ", 500});
+            typoDictionary.addEntry({"taninnganway", u8"တနင်္ဂနွေ", 500});
+            typoDictionary.addEntry({"taninlar", u8"တနင်္လာ", 500});
+            const myanglish::MyanglishConverter typoConverter(std::move(typoDictionary));
+            const auto suggested = typoConverter.getCandidates("taningnway", 9);
+            tests.expectTrue(!suggested.empty() && suggested.front().burmese == "taningnway",
+                "Typo keeps raw input first");
+            tests.expectContains(suggested, u8"တနင်္ဂနွေ",
+                "One missing letter yields explicit Sunday suggestion");
+            const auto exact = typoConverter.getCandidates("taninganway", 9);
+            tests.expectTrue(!exact.empty() && exact.front().burmese == u8"တနင်္ဂနွေ",
+                "Exact mapping retains original priority");
+            const auto shortInput = typoConverter.getCandidates("tani", 9);
+            tests.expectTrue(!containsCandidate(shortInput, u8"တနင်္ဂနွေ"),
+                "Under five letters never fuzzy-matches");
+            const auto farInput = typoConverter.getCandidates("taningawya", 9);
+            tests.expectTrue(!containsCandidate(farInput, u8"တနင်္ဂနွေ"),
+                "Multiple edits are not suggested");
+            typoDictionary = myanglish::Dictionary{};
+            typoDictionary.addEntry({"taninganway", u8"တနင်္ဂနွေ", 500});
+            typoDictionary.addEntry({"taningnway", u8"အခြား", 500});
+            const myanglish::MyanglishConverter exactWins(std::move(typoDictionary));
+            tests.expectTrue(!exactWins.getCandidates("taningnway", 9).empty() &&
+                exactWins.getCandidates("taningnway", 9).front().burmese == u8"အခြား",
+                "Exact dictionary entry blocks typo replacement");
+        }
+
+
         tests.expectEqual(converter.convertSentence("mingalar par"), u8"မင်္ဂလာပါ", "Exact word conversion");
         tests.expectEqual(converter.convertSentence("nay kaung lar"), u8"နေကောင်းလား", "Complete phrase conversion");
         tests.expectEqual(converter.convertSentence("kyay zu tin par tal"), u8"ကျေးဇူးတင်ပါတယ်", "Longest phrase conversion");
