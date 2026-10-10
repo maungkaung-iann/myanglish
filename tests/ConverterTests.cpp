@@ -105,7 +105,15 @@ int main() {
             typoDictionary.addEntry({"taninganway", u8"တနင်္ဂနွေ", 500});
             typoDictionary.addEntry({"taninnganway", u8"တနင်္ဂနွေ", 500});
             typoDictionary.addEntry({"taninlar", u8"တနင်္လာ", 500});
+            typoDictionary.addEntry({"taninlr", u8"တနင်္လာ", 500});
             const myanglish::MyanglishConverter typoConverter(std::move(typoDictionary));
+            const auto unfinished = typoConverter.getCandidates("taninl", 9);
+            tests.expectTrue(!containsCandidate(unfinished, u8"တနင်္လာ"),
+                "Dangling final l cannot suggest Monday");
+            tests.expectContains(typoConverter.getCandidates("taninla", 9), u8"တနင်္လာ",
+                "Completed la can suggest Monday");
+            tests.expectContains(typoConverter.getCandidates("taninlr", 9), u8"တနင်္လာ",
+                "Reviewed lr maps to Monday");
             const auto suggested = typoConverter.getCandidates("taningnway", 9);
             tests.expectTrue(!suggested.empty() && suggested.front().burmese == "taningnway",
                 "Typo keeps raw input first");
